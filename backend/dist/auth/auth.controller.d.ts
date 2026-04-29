@@ -1,6 +1,7 @@
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
+import { Role } from '@prisma/client';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
@@ -10,6 +11,7 @@ export declare class AuthController {
             id: any;
             email: any;
             role: any;
+            activeRole: any;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -18,6 +20,17 @@ export declare class AuthController {
             id: any;
             email: any;
             role: any;
+            activeRole: any;
         };
+    }>;
+    syncUser(req: any): Promise<{
+        user: any;
+        isNew: boolean;
+    }>;
+    toggleRole(req: any, role: Role): Promise<{
+        email: string;
+        role: import("@prisma/client").$Enums.Role;
+        id: string;
+        activeRole: import("@prisma/client").$Enums.Role;
     }>;
 }

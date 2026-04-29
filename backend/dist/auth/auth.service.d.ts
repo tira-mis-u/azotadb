@@ -1,5 +1,6 @@
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '@prisma/client';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
 export declare class AuthService {
@@ -12,6 +13,7 @@ export declare class AuthService {
             id: any;
             email: any;
             role: any;
+            activeRole: any;
         };
     }>;
     login(dto: LoginDto): Promise<{
@@ -20,7 +22,18 @@ export declare class AuthService {
             id: any;
             email: any;
             role: any;
+            activeRole: any;
         };
+    }>;
+    syncSupabaseUser(jwtPayload: any): Promise<{
+        user: any;
+        isNew: boolean;
+    }>;
+    toggleRole(userId: string, targetRole: Role): Promise<{
+        email: string;
+        role: import("@prisma/client").$Enums.Role;
+        id: string;
+        activeRole: import("@prisma/client").$Enums.Role;
     }>;
     private generateToken;
 }

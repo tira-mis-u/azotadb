@@ -46,6 +46,7 @@ exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../prisma/prisma.service");
+const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
 let AuthService = class AuthService {
     prisma;
@@ -66,7 +67,9 @@ let AuthService = class AuthService {
             data: {
                 email: dto.email,
                 passwordHash: hashedPassword,
-                role: dto.role || 'STUDENT',
+                role: dto.role || client_1.Role.STUDENT,
+                activeRole: client_1.Role.STUDENT,
+                oauthProvider: 'email',
             },
         });
         return this.generateToken(user);
@@ -75,7 +78,7 @@ let AuthService = class AuthService {
         const user = await this.prisma.user.findUnique({
             where: { email: dto.email },
         });
-        if (!user) {
+        if (!user || !user.passwordHash) {
             throw new common_1.UnauthorizedException('Invalid credentials');
         }
         const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
@@ -84,14 +87,38 @@ let AuthService = class AuthService {
         }
         return this.generateToken(user);
     }
+    async syncSupabaseUser(jwtPayload) {
+        if (jwtPayload.isNew) {
+            const newUser = await this.prisma.user.create({
+                data: {
+                    email: jwtPayload.email,
+                    authId: jwtPayload.authId,
+                    role: client_1.Role.STUDENT,
+                    activeRole: client_1.Role.STUDENT,
+                    oauthProvider: 'google',
+                },
+            });
+            return { user: newUser, isNew: true };
+        }
+        return { user: jwtPayload, isNew: false };
+    }
+    async toggleRole(userId, targetRole) {
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { activeRole: targetRole },
+            select: { id: true, email: true, role: true, activeRole: true },
+        });
+        return user;
+    }
     generateToken(user) {
-        const payload = { sub: user.id, email: user.email, role: user.role };
+        const payload = { sub: user.id, email: user.email, role: user.role, activeRole: user.activeRole };
         return {
             access_token: this.jwtService.sign(payload),
             user: {
                 id: user.id,
                 email: user.email,
                 role: user.role,
+                activeRole: user.activeRole,
             },
         };
     }

@@ -26,8 +26,12 @@ enum ExamStatus {
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
-  passwordHash  String
-  role          Role      @default(STUDENT)
+  passwordHash  String?
+  role          Role      @default(STUDENT) // Quyền tối đa
+  activeRole    Role      @default(STUDENT) // Chế độ UI hiện tại (Teacher / Student)
+  
+  authId        String?   @unique // ID từ Supabase Auth
+  oauthProvider String?   // 'google', 'email'...
   
   // Relations
   createdExams  Exam[]    @relation("TeacherExams")

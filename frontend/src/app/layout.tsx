@@ -1,22 +1,18 @@
 import React from "react";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
-  title: "Azota DB - Hệ thống luyện đề online",
-  description: "Luyện đề thi online thông minh với Azota DB",
+  title: "AzotaDB - Hệ thống luyện đề thi online",
+  description: "Luyện đề thi trực tuyến thông minh, chấm bài tự động, phân tích điểm yếu. Dành cho giáo viên và học sinh.",
+  keywords: "luyện đề, thi online, ôn thi, đề thi, học tập",
 };
 
 export default function RootLayout({
@@ -27,7 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} font-sans antialiased bg-gray-50 dark:bg-gray-950`}
       >
         <AuthProvider>
           {children}

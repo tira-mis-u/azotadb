@@ -4,20 +4,20 @@ export declare class SubmissionController {
     constructor(submissionService: SubmissionService);
     startSubmission(examId: string, userId: string): Promise<{
         id: string;
+        userId: string;
         startTime: Date;
         endTime: Date | null;
         status: string;
         examId: string;
-        userId: string;
         score: number | null;
     }>;
     submitExam(id: string, answers: Record<string, any>): Promise<{
         id: string;
+        userId: string;
         startTime: Date;
         endTime: Date | null;
         status: string;
         examId: string;
-        userId: string;
         score: number | null;
     }>;
     getMySubmissions(userId: string): Promise<({
@@ -26,11 +26,11 @@ export declare class SubmissionController {
         };
     } & {
         id: string;
+        userId: string;
         startTime: Date;
         endTime: Date | null;
         status: string;
         examId: string;
-        userId: string;
         score: number | null;
     })[]>;
 }
