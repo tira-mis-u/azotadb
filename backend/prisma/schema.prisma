@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String
+  role          Role      @default(STUDENT)
+  
+  // Relations
+  createdExams  Exam[]    @relation("TeacherExams")
+  enrollments   Enrollment[]
+  submissions   Submission[]
+  files         UploadedFile[]
+  
+  createdAt     DateTime  @default(now())
+}
+
+model Class {
+  id          String       @id @default(uuid())
+  name        String
+  teacherId   String
+  
+  enrollments Enrollment[]
+  createdAt   DateTime     @default(now())
+}
+
+// Junction Table: Many-to-Many giữa User và Class
+model Enrollment {
+  userId      String
+  classId     String
+  user        User     @relation(fields: [userId], references: [id])
+  class       Class    @relation(fields: [classId], references: [id])
+
+  @@id([userId, classId])
+}
+
+model Exam {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  teacherId   String
+  teacher     User        @relation("TeacherExams", fields: [teacherId], references: [id])
+  
+  duration    Int         // minutes
+  startTime   DateTime?
+  endTime     DateTime?
+  status      ExamStatus  @default(DRAFT)
+  
+  questions   Question[]
+  submissions Submission[]
+  
+  createdAt   DateTime    @default(now())
+}
+
+model Question {
+  id          String    @id @default(uuid())
+  examId      String
+  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
+  
+  type        String    // MULTIPLE_CHOICE, ESSAY...
+  content     String    // HTML/Markdown text
+  points      Float     @default(1.0)
+  
+  // metadata chứa JSON structure: choices, correct_answers, explanation
+  metadata    Json      
+  
+  answers     SubmissionAnswer[]
+}
+
+model Submission {
+  id          String    @id @default(uuid())
+  examId      String
+  userId      String
+  exam        Exam      @relation(fields: [examId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  
+  startTime   DateTime  @default(now())
+  endTime     DateTime?
+  status      String    // IN_PROGRESS, SUBMITTED
+  score       Float?
+  
+  answers     SubmissionAnswer[]
+  
+  @@unique([examId, userId]) // Anti double submit
+}
+
+model SubmissionAnswer {
+  id           String     @id @default(uuid())
+  submissionId String
+  questionId   String
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  question     Question   @relation(fields: [questionId], references: [id])
+  
+  studentAnswer Json?     // Lựa chọn của học sinh
+  isCorrect    Boolean?
+  pointsAwarded Float?
+}
+
+model UploadedFile {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  
+  fileUrl     String
+  status      String    // PENDING, PROCESSING, DONE, FAILED
+  rawText     String?   @db.Text
+  parsedJson  Json?
+  
+  createdAt   DateTime  @default(now())
+}
