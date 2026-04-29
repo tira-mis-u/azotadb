@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { createClient } from '@/lib/supabase/client';
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = '/api';
 
 type Role = 'STUDENT' | 'TEACHER' | 'ADMIN';
 
@@ -40,8 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await axios.post(
         `${API_URL}/auth/sync`,
-        {},
-        { headers: { Authorization: `Bearer ${accessToken}` } }
+        { accessToken }
       );
       const profile: UserProfile = res.data.user || res.data;
       setUser(profile);

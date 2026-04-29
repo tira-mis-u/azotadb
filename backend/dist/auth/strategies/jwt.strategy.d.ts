@@ -14,11 +14,11 @@ export declare class JwtStrategy extends JwtStrategy_base {
         role?: undefined;
         activeRole?: undefined;
     } | {
-        userId: string;
-        authId: string | null;
-        email: string;
-        role: import("@prisma/client").$Enums.Role;
-        activeRole: import("@prisma/client").$Enums.Role;
+        userId: any;
+        authId: any;
+        email: any;
+        role: any;
+        activeRole: any;
         isNew?: undefined;
     }>;
 }

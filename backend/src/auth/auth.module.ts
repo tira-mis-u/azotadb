@@ -10,9 +10,20 @@ import { PrismaModule } from '../prisma/prisma.module';
   imports: [
     PassportModule,
     PrismaModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET || 'secretKey',
-      signOptions: { expiresIn: '7d' },
+    JwtModule.registerAsync({
+      useFactory: () => {
+        let secret = (process.env.JWT_SECRET || 'secretKey').trim();
+        secret = secret.replace(/^["']|["']$/g, '');
+        return {
+          secret: (secret.length >= 64 && (secret.includes('+') || secret.includes('/') || secret.endsWith('=')))
+            ? Buffer.from(secret, 'base64')
+            : secret,
+          signOptions: { 
+            expiresIn: '7d',
+            // Tạm thời bỏ qua audience để debug
+          },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

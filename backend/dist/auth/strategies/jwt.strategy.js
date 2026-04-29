@@ -13,36 +13,53 @@ exports.JwtStrategy = void 0;
 const common_1 = require("@nestjs/common");
 const passport_1 = require("@nestjs/passport");
 const passport_jwt_1 = require("passport-jwt");
+const jwks_rsa_1 = require("jwks-rsa");
 const prisma_service_1 = require("../../prisma/prisma.service");
 let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(passport_jwt_1.Strategy) {
     prisma;
     constructor(prisma) {
+        const projectId = process.env.SUPABASE_PROJECT_ID || 'ehlrjjlrdkddrjhnafpe';
         super({
             jwtFromRequest: passport_jwt_1.ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: process.env.JWT_SECRET || 'secretKey',
+            audience: 'authenticated',
+            issuer: `https://${projectId}.supabase.co/auth/v1`,
+            algorithms: ['RS256', 'HS256', 'ES256'],
+            secretOrKeyProvider: (0, jwks_rsa_1.passportJwtSecret)({
+                cache: true,
+                rateLimit: true,
+                jwksRequestsPerMinute: 5,
+                jwksUri: `https://${projectId}.supabase.co/auth/v1/.well-known/jwks.json`,
+            }),
         });
         this.prisma = prisma;
     }
     async validate(payload) {
-        const user = await this.prisma.user.findFirst({
-            where: {
-                OR: [
-                    { authId: payload.sub },
-                    { email: payload.email }
-                ]
+        try {
+            const db = this.prisma;
+            const user = await db.user.findFirst({
+                where: {
+                    OR: [
+                        { authId: payload.sub },
+                        { email: payload.email }
+                    ]
+                }
+            });
+            if (!user) {
+                return { authId: payload.sub, email: payload.email, isNew: true };
             }
-        });
-        if (!user) {
-            return { authId: payload.sub, email: payload.email, isNew: true };
+            return {
+                userId: user.id,
+                authId: user['authId'],
+                email: user.email,
+                role: user.role,
+                activeRole: user['activeRole']
+            };
         }
-        return {
-            userId: user.id,
-            authId: user.authId,
-            email: user.email,
-            role: user.role,
-            activeRole: user.activeRole
-        };
+        catch (error) {
+            console.error('JWT Validation Error:', error);
+            throw new common_1.UnauthorizedException();
+        }
     }
 };
 exports.JwtStrategy = JwtStrategy;

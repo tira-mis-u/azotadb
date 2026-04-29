@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
@@ -20,11 +20,10 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  // ─── Supabase Sync (gọi ngay sau khi Supabase cấp token) ──────────────────
-  @UseGuards(JwtAuthGuard)
+  // ─── Supabase Sync (Xử lý thủ công để tránh lỗi 401) ──────────────────
   @Post('sync')
-  syncUser(@Req() req: any) {
-    return this.authService.syncSupabaseUser(req.user);
+  syncUser(@Req() req: any, @Body('accessToken') accessToken: string) {
+    return this.authService.syncWithToken(accessToken);
   }
 
   // ─── Toggle Role (Teacher ↔ Student) ──────────────────────────────────────

@@ -30,8 +30,8 @@ let AuthController = class AuthController {
     login(dto) {
         return this.authService.login(dto);
     }
-    syncUser(req) {
-        return this.authService.syncSupabaseUser(req.user);
+    syncUser(req, accessToken) {
+        return this.authService.syncWithToken(accessToken);
     }
     toggleRole(req, role) {
         return this.authService.toggleRole(req.user.userId, role);
@@ -53,11 +53,11 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
 __decorate([
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, common_1.Post)('sync'),
     __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)('accessToken')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
+    __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "syncUser", null);
 __decorate([

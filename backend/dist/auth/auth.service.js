@@ -44,9 +44,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 const common_1 = require("@nestjs/common");
-const jwt_1 = require("@nestjs/jwt");
 const prisma_service_1 = require("../prisma/prisma.service");
-const client_1 = require("@prisma/client");
+const jwt_1 = require("@nestjs/jwt");
 const bcrypt = __importStar(require("bcrypt"));
 let AuthService = class AuthService {
     prisma;
@@ -55,65 +54,78 @@ let AuthService = class AuthService {
         this.prisma = prisma;
         this.jwtService = jwtService;
     }
-    async register(dto) {
-        const existingUser = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
-        if (existingUser) {
-            throw new common_1.BadRequestException('Email already exists');
+    async syncWithToken(token) {
+        try {
+            console.log('--- SYNC ATTEMPT ---');
+            const payload = this.jwtService.decode(token);
+            console.log('Payload decoded:', payload?.email);
+            if (!payload)
+                throw new Error('Token không hợp lệ hoặc rỗng');
+            const result = await this.syncSupabaseUser({
+                authId: payload.sub,
+                email: payload.email,
+            });
+            console.log('Sync Successful for:', result.email);
+            return result;
         }
+        catch (error) {
+            console.error('CRITICAL SYNC ERROR:', error);
+            throw new common_1.UnauthorizedException('Không thể đồng bộ: ' + error.message);
+        }
+    }
+    async syncSupabaseUser(supabaseUser) {
+        const db = this.prisma;
+        let user = await db.user.findFirst({
+            where: {
+                OR: [
+                    { authId: supabaseUser.authId },
+                    { email: supabaseUser.email },
+                ],
+            },
+        });
+        if (!user) {
+            user = await db.user.create({
+                data: {
+                    authId: supabaseUser.authId,
+                    email: supabaseUser.email,
+                    activeRole: 'STUDENT',
+                    role: 'STUDENT',
+                },
+            });
+        }
+        else if (!user.authId) {
+            user = await db.user.update({
+                where: { id: user.id },
+                data: { authId: supabaseUser.authId },
+            });
+        }
+        return user;
+    }
+    async register(dto) {
+        const existingUser = await this.prisma.user.findUnique({ where: { email: dto.email } });
+        if (existingUser)
+            throw new common_1.ConflictException('Email already exists');
         const hashedPassword = await bcrypt.hash(dto.password, 10);
-        const user = await this.prisma.user.create({
+        const db = this.prisma;
+        return db.user.create({
             data: {
                 email: dto.email,
                 passwordHash: hashedPassword,
-                role: dto.role || client_1.Role.STUDENT,
-                activeRole: client_1.Role.STUDENT,
-                oauthProvider: 'email',
+                role: 'STUDENT',
+                activeRole: 'STUDENT',
             },
         });
-        return this.generateToken(user);
     }
     async login(dto) {
-        const user = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
-        if (!user || !user.passwordHash) {
+        const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+        if (!user || !user.passwordHash)
             throw new common_1.UnauthorizedException('Invalid credentials');
-        }
         const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
-        if (!isPasswordValid) {
+        if (!isPasswordValid)
             throw new common_1.UnauthorizedException('Invalid credentials');
-        }
-        return this.generateToken(user);
-    }
-    async syncSupabaseUser(jwtPayload) {
-        if (jwtPayload.isNew) {
-            const newUser = await this.prisma.user.create({
-                data: {
-                    email: jwtPayload.email,
-                    authId: jwtPayload.authId,
-                    role: client_1.Role.STUDENT,
-                    activeRole: client_1.Role.STUDENT,
-                    oauthProvider: 'google',
-                },
-            });
-            return { user: newUser, isNew: true };
-        }
-        return { user: jwtPayload, isNew: false };
-    }
-    async toggleRole(userId, targetRole) {
-        const user = await this.prisma.user.update({
-            where: { id: userId },
-            data: { activeRole: targetRole },
-            select: { id: true, email: true, role: true, activeRole: true },
-        });
-        return user;
-    }
-    generateToken(user) {
-        const payload = { sub: user.id, email: user.email, role: user.role, activeRole: user.activeRole };
+        const payload = { sub: user.id, email: user.email, role: user.role };
         return {
-            access_token: this.jwtService.sign(payload),
+            access_token: await this.jwtService.signAsync(payload),
             user: {
                 id: user.id,
                 email: user.email,
@@ -121,6 +133,13 @@ let AuthService = class AuthService {
                 activeRole: user.activeRole,
             },
         };
+    }
+    async toggleRole(userId, role) {
+        const db = this.prisma;
+        return db.user.update({
+            where: { id: userId },
+            data: { activeRole: role },
+        });
     }
 };
 exports.AuthService = AuthService;

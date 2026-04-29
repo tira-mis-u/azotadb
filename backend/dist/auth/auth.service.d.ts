@@ -1,39 +1,26 @@
-import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { LoginDto } from './dto/login.dto';
+import { Role } from '@prisma/client';
 export declare class AuthService {
     private prisma;
     private jwtService;
     constructor(prisma: PrismaService, jwtService: JwtService);
-    register(dto: CreateAuthDto): Promise<{
-        access_token: string;
-        user: {
-            id: any;
-            email: any;
-            role: any;
-            activeRole: any;
-        };
-    }>;
+    syncWithToken(token: string): Promise<any>;
+    syncSupabaseUser(supabaseUser: {
+        authId: string;
+        email: string;
+    }): Promise<any>;
+    register(dto: CreateAuthDto): Promise<any>;
     login(dto: LoginDto): Promise<{
         access_token: string;
         user: {
-            id: any;
-            email: any;
-            role: any;
+            id: string;
+            email: string;
+            role: import("@prisma/client").$Enums.Role;
             activeRole: any;
         };
     }>;
-    syncSupabaseUser(jwtPayload: any): Promise<{
-        user: any;
-        isNew: boolean;
-    }>;
-    toggleRole(userId: string, targetRole: Role): Promise<{
-        email: string;
-        role: import("@prisma/client").$Enums.Role;
-        id: string;
-        activeRole: import("@prisma/client").$Enums.Role;
-    }>;
-    private generateToken;
+    toggleRole(userId: string, role: Role): Promise<any>;
 }
