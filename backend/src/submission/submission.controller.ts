@@ -8,17 +8,39 @@ import { GetUser } from '../common/decorators/get-user.decorator';
 export class SubmissionController {
   constructor(private readonly submissionService: SubmissionService) {}
 
+  @Get(':id')
+  getSubmission(@Param('id') id: string, @GetUser('userId') userId: string) {
+    return this.submissionService.getSubmission(id, userId);
+  }
+
   @Post('start/:examId')
   startSubmission(@Param('examId') examId: string, @GetUser('userId') userId: string) {
     return this.submissionService.startSubmission(examId, userId);
   }
 
-  @Post(':id/submit')
-  submitExam(@Param('id') id: string, @Body() answers: Record<string, any>) {
-    return this.submissionService.submitExam(id, answers);
+  @Post(':id/autosave')
+  autosave(
+    @Param('id') id: string,
+    @GetUser('userId') userId: string,
+    @Body() body: { questionId: string; answer: any }
+  ) {
+    return this.submissionService.autosave(id, userId, body.questionId, body.answer);
   }
 
-  @Get('my')
+  @Post(':id/submit')
+  submitExam(
+    @Param('id') id: string, 
+    @GetUser('userId') userId: string,
+    @Body() body: { violations?: any[]; candidateNumber?: string; examCode?: string }
+  ) {
+    return this.submissionService.submitExam(id, userId, {
+      violations: body.violations,
+      candidateNumber: body.candidateNumber,
+      examCode: body.examCode
+    });
+  }
+
+  @Get('my/list')
   getMySubmissions(@GetUser('userId') userId: string) {
     return this.submissionService.getMySubmissions(userId);
   }

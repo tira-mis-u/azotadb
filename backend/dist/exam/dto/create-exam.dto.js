@@ -17,6 +17,17 @@ class CreateExamDto {
     duration;
     startTime;
     endTime;
+    mode;
+    examCode;
+    isTimed;
+    requiresPassword;
+    password;
+    strictMode;
+    fullscreenRequired;
+    maxAttempts;
+    allowScoreView;
+    allowAnswerReview;
+    maxScore;
 }
 exports.CreateExamDto = CreateExamDto;
 __decorate([
@@ -44,4 +55,52 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateExamDto.prototype, "endTime", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateExamDto.prototype, "mode", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateExamDto.prototype, "examCode", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateExamDto.prototype, "isTimed", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateExamDto.prototype, "requiresPassword", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateExamDto.prototype, "password", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateExamDto.prototype, "strictMode", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateExamDto.prototype, "fullscreenRequired", void 0);
+__decorate([
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateExamDto.prototype, "maxAttempts", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateExamDto.prototype, "allowScoreView", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateExamDto.prototype, "allowAnswerReview", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateExamDto.prototype, "maxScore", void 0);
 //# sourceMappingURL=create-exam.dto.js.map

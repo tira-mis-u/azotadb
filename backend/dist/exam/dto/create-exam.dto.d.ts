@@ -4,4 +4,15 @@ export declare class CreateExamDto {
     duration: number;
     startTime?: string;
     endTime?: string;
+    mode?: 'STANDARD' | 'THPTQG';
+    examCode?: string;
+    isTimed?: boolean;
+    requiresPassword?: boolean;
+    password?: string;
+    strictMode?: boolean;
+    fullscreenRequired?: boolean;
+    maxAttempts?: number;
+    allowScoreView?: boolean;
+    allowAnswerReview?: boolean;
+    maxScore?: number;
 }

@@ -23,6 +23,11 @@ enum ExamStatus {
   CLOSED
 }
 
+enum ExamMode {
+  STANDARD
+  THPTQG
+}
+
 model User {
   id            String    @id @default(uuid())
   email         String    @unique
@@ -68,10 +73,29 @@ model Exam {
   teacherId   String
   teacher     User        @relation("TeacherExams", fields: [teacherId], references: [id])
   
-  duration    Int         // minutes
+  isTimed     Boolean     @default(true)
+  duration    Int?        // minutes
   startTime   DateTime?
   endTime     DateTime?
   status      ExamStatus  @default(DRAFT)
+
+  // New Settings
+  mode               ExamMode @default(STANDARD)
+  strictMode         Boolean  @default(false)
+  fullscreenRequired Boolean  @default(false)
+  maxAttempts        Int      @default(0) // 0 = unlimited
+  shuffleQuestions   Boolean  @default(false)
+  shuffleOptions     Boolean  @default(false)
+  examCode           String?
+
+  // Result & Scoring Settings
+  allowAnswerReview  Boolean  @default(true)
+  allowScoreView     Boolean  @default(true)
+  maxScore           Float    @default(10.0)
+
+  // Password Protection
+  requiresPassword   Boolean  @default(false)
+  passwordHash       String?
   
   questions   Question[]
   submissions Submission[]
@@ -84,14 +108,25 @@ model Question {
   examId      String
   exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
   
-  type        String    // MULTIPLE_CHOICE, ESSAY...
-  content     String    // HTML/Markdown text
+  type        String    // MULTIPLE_CHOICE, TRUE_FALSE, TRUE_FALSE_GROUP, ESSAY
+  content     String    // Markdown text
   points      Float     @default(1.0)
+  explanation String?   // Markdown explanation
   
-  // metadata chứa JSON structure: choices, correct_answers, explanation
+  // metadata chứa JSON structure cho các type cũ hoặc bổ trợ
   metadata    Json      
   
+  statements  TrueFalseStatement[]
   answers     SubmissionAnswer[]
+}
+
+model TrueFalseStatement {
+  id            String    @id @default(uuid())
+  questionId    String
+  question      Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  content       String    // Nội dung mệnh đề (Markdown)
+  correctAnswer Boolean   // Đúng hoặc Sai
+  order         Int       @default(0)
 }
 
 model Submission {
@@ -105,10 +140,23 @@ model Submission {
   endTime     DateTime?
   status      String    // IN_PROGRESS, SUBMITTED
   score       Float?
+
+  // THPTQG Info
+  candidateNumber  String?
+  examCode         String?
+
+  // Tracking
+  attemptNumber    Int      @default(1)
+  violations       Json     @default("[]") // List of violation events
+  deviceIdentifier String?  // Browser fingerprint or similar
   
+  // Display settings at time of submission
+  scoreHidden      Boolean  @default(false)
+  reviewHidden     Boolean  @default(false)
+
   answers     SubmissionAnswer[]
   
-  @@unique([examId, userId]) // Anti double submit
+  @@unique([examId, userId, attemptNumber]) // Allow multiple attempts
 }
 
 model SubmissionAnswer {

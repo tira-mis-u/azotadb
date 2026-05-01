@@ -24,6 +24,8 @@ interface AuthContextType {
   loginWithGoogle: () => Promise<void>;
   register: (email: string, password: string, username: string) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (password: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
   switchRole: (role: Role) => Promise<void>;
 }
 
@@ -51,19 +53,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
       setSession(session);
       if (session?.access_token) {
-        syncWithBackend(session.access_token);
+        await syncWithBackend(session.access_token);
       }
-      setLoading(false);
+      if (mounted) setLoading(false);
     });
 
     // Listen for auth changes (login, logout, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        if (!mounted) return;
         setSession(newSession);
+        
+        // Avoid duplicate sync on initial load
+        if (event === 'INITIAL_SESSION') return;
+
         if (newSession?.access_token) {
           await syncWithBackend(newSession.access_token);
         } else {
@@ -73,7 +83,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [syncWithBackend]);
 
   const login = async (email: string, password: string) => {
@@ -109,6 +122,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setActiveRole('STUDENT');
   };
 
+  const forgotPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    if (error) throw error;
+  };
+
+  const resetPassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+  };
+
   const switchRole = async (role: Role) => {
     if (!session?.access_token) return;
     try {
@@ -125,7 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, activeRole, loading, login, loginWithGoogle, register, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, session, activeRole, loading, login, loginWithGoogle, register, logout, switchRole, forgotPassword, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

@@ -22,17 +22,35 @@ let SubmissionController = class SubmissionController {
     constructor(submissionService) {
         this.submissionService = submissionService;
     }
+    getSubmission(id, userId) {
+        return this.submissionService.getSubmission(id, userId);
+    }
     startSubmission(examId, userId) {
         return this.submissionService.startSubmission(examId, userId);
     }
-    submitExam(id, answers) {
-        return this.submissionService.submitExam(id, answers);
+    autosave(id, userId, body) {
+        return this.submissionService.autosave(id, userId, body.questionId, body.answer);
+    }
+    submitExam(id, userId, body) {
+        return this.submissionService.submitExam(id, userId, {
+            violations: body.violations,
+            candidateNumber: body.candidateNumber,
+            examCode: body.examCode
+        });
     }
     getMySubmissions(userId) {
         return this.submissionService.getMySubmissions(userId);
     }
 };
 exports.SubmissionController = SubmissionController;
+__decorate([
+    (0, common_1.Get)(':id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)('userId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], SubmissionController.prototype, "getSubmission", null);
 __decorate([
     (0, common_1.Post)('start/:examId'),
     __param(0, (0, common_1.Param)('examId')),
@@ -42,15 +60,25 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], SubmissionController.prototype, "startSubmission", null);
 __decorate([
+    (0, common_1.Post)(':id/autosave'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, get_user_decorator_1.GetUser)('userId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], SubmissionController.prototype, "autosave", null);
+__decorate([
     (0, common_1.Post)(':id/submit'),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, common_1.Body)()),
+    __param(1, (0, get_user_decorator_1.GetUser)('userId')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, String, Object]),
     __metadata("design:returntype", void 0)
 ], SubmissionController.prototype, "submitExam", null);
 __decorate([
-    (0, common_1.Get)('my'),
+    (0, common_1.Get)('my/list'),
     __param(0, (0, get_user_decorator_1.GetUser)('userId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

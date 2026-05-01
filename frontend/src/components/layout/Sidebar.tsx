@@ -8,8 +8,9 @@ import Link from 'next/link';
 import {
   BookOpen, LayoutDashboard, ClipboardList, History, Bookmark,
   PlusCircle, FileText, BarChart3, Database, Upload,
-  GraduationCap, ChevronRight, LogOut, Settings
+  GraduationCap, ChevronRight, LogOut, Settings, Sun, Moon, Zap
 } from 'lucide-react';
+import { useTheme } from '@/components/providers/theme-provider';
 
 const studentMenu = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Tổng quan' },
@@ -28,8 +29,15 @@ const teacherMenu = [
   { href: '/teacher/stats', icon: BarChart3, label: 'Thống kê' },
 ];
 
+const THEMES = [
+  { id: 'light' as const, icon: Sun, label: 'Sáng' },
+  { id: 'dark' as const, icon: Moon, label: 'Tối' },
+  { id: 'neon' as const, icon: Zap, label: 'Neon' },
+];
+
 export default function Sidebar() {
   const { user, activeRole, switchRole, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const router = useRouter();
 
@@ -42,41 +50,111 @@ export default function Sidebar() {
   };
 
   const handleRoleSwitch = async () => {
-    const newRole = isTeacher ? 'STUDENT' : 'TEACHER';
-    await switchRole(newRole as any);
+    await switchRole((isTeacher ? 'STUDENT' : 'TEACHER') as any);
   };
 
   return (
-    <aside className="w-64 shrink-0 h-screen sticky top-0 flex flex-col bg-white dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800">
+    <aside
+      className="app-sidebar w-64 shrink-0 h-screen sticky top-0 flex flex-col"
+      style={{ backgroundColor: 'var(--sidebar-bg)', borderRight: '1px solid var(--sidebar-border)' }}
+    >
       {/* Logo */}
-      <div className="flex items-center gap-3 p-5 border-b border-gray-100 dark:border-gray-800">
-        <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0">
-          <GraduationCap className="w-5 h-5 text-white" />
+      <div style={{ padding: '20px', borderBottom: '1px solid var(--sidebar-border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{
+          width: 36, height: 36,
+          background: theme === 'neon' ? 'linear-gradient(135deg, #00ffff, #0080ff)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+          borderRadius: 10,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: theme === 'neon' ? '0 0 15px #00ffff55' : 'none',
+          flexShrink: 0
+        }}>
+          <GraduationCap size={18} color="#fff" />
         </div>
         <div>
-          <p className="font-bold text-gray-900 dark:text-white text-sm">AzotaDB</p>
-          <p className="text-xs text-gray-400">Luyện đề thông minh</p>
+          <p style={{ fontWeight: 800, fontSize: 14, color: 'var(--foreground)', letterSpacing: '-0.02em' }}>AzotaDB</p>
+          <p style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Luyện đề thông minh</p>
+        </div>
+      </div>
+
+      {/* Theme Switcher */}
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--sidebar-border)' }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Giao diện</p>
+        <div style={{
+          display: 'flex',
+          gap: 4,
+          background: 'var(--muted)',
+          padding: 4,
+          borderRadius: 10,
+          border: '1px solid var(--border)'
+        }}>
+          {THEMES.map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => setTheme(id)}
+              title={label}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4,
+                padding: '6px 4px',
+                borderRadius: 7,
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 10,
+                fontWeight: 700,
+                transition: 'all 0.2s ease',
+                background: theme === id
+                  ? id === 'neon'
+                    ? 'linear-gradient(135deg, #00ffff22, #0080ff22)'
+                    : 'var(--card)'
+                  : 'transparent',
+                color: theme === id
+                  ? id === 'neon' ? '#00ffff' : 'var(--primary)'
+                  : 'var(--muted-foreground)',
+                boxShadow: theme === id
+                  ? id === 'neon' ? '0 0 10px #00ffff33' : '0 1px 4px rgba(0,0,0,0.1)'
+                  : 'none',
+              }}
+            >
+              <Icon size={13} />
+              <span>{label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Role Toggle */}
-      <div className="p-4 border-b border-gray-100 dark:border-gray-800">
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Chế độ hiện tại</p>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--sidebar-border)' }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>Chế độ</p>
         <button
           onClick={handleRoleSwitch}
-          className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-sm font-medium
-            ${isTeacher
-              ? 'bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800'
-              : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
-            }`}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 14px',
+            borderRadius: 10,
+            border: `1px solid ${isTeacher ? '#7c3aed44' : '#4f46e544'}`,
+            background: isTeacher
+              ? theme === 'neon' ? '#7c3aed11' : 'rgba(109,40,217,0.07)'
+              : theme === 'neon' ? '#00ffff11' : 'rgba(99,102,241,0.07)',
+            color: 'var(--foreground)',
+            cursor: 'pointer',
+            fontSize: 13,
+            fontWeight: 600,
+            transition: 'all 0.2s ease',
+          }}
         >
           <span>{isTeacher ? '🎓 Giáo viên' : '📚 Học sinh'}</span>
-          <span className="text-xs opacity-60">Chuyển →</span>
+          <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Chuyển →</span>
         </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 p-4 overflow-y-auto">
+      <nav style={{ flex: 1, padding: '12px', overflowY: 'auto' }}>
         <AnimatePresence mode="wait">
           <motion.div
             key={activeRole}
@@ -84,7 +162,7 @@ export default function Sidebar() {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 8 }}
             transition={{ duration: 0.15 }}
-            className="space-y-1"
+            style={{ display: 'flex', flexDirection: 'column', gap: 2 }}
           >
             {menu.map(({ href, icon: Icon, label }) => {
               const isActive = pathname === href || pathname.startsWith(href + '/');
@@ -92,15 +170,33 @@ export default function Sidebar() {
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all group
-                    ${isActive
-                      ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                    }`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    padding: '9px 12px',
+                    borderRadius: 10,
+                    textDecoration: 'none',
+                    fontSize: 13,
+                    fontWeight: isActive ? 700 : 500,
+                    transition: 'all 0.15s ease',
+                    background: isActive
+                      ? theme === 'neon'
+                        ? 'linear-gradient(135deg, #00ffff15, #0080ff10)'
+                        : 'var(--accent)'
+                      : 'transparent',
+                    color: isActive
+                      ? theme === 'neon' ? '#00ffff' : 'var(--primary)'
+                      : 'var(--muted-foreground)',
+                    boxShadow: isActive && theme === 'neon' ? '0 0 10px #00ffff22' : 'none',
+                    borderLeft: isActive
+                      ? `3px solid ${theme === 'neon' ? '#00ffff' : 'var(--primary)'}`
+                      : '3px solid transparent',
+                  }}
                 >
-                  <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300'}`} />
-                  {label}
-                  {isActive && <ChevronRight className="w-3 h-3 ml-auto text-indigo-400" />}
+                  <Icon size={16} style={{ flexShrink: 0 }} />
+                  <span style={{ flex: 1 }}>{label}</span>
+                  {isActive && <ChevronRight size={12} />}
                 </Link>
               );
             })}
@@ -109,25 +205,51 @@ export default function Sidebar() {
       </nav>
 
       {/* User Profile */}
-      <div className="p-4 border-t border-gray-100 dark:border-gray-800">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-400 to-purple-400 flex items-center justify-center text-white text-sm font-bold shrink-0">
+      <div style={{ padding: '12px 16px', borderTop: '1px solid var(--sidebar-border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10,
+            background: 'linear-gradient(135deg, #6366f1, #a78bfa)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: '#fff', fontWeight: 800, fontSize: 14, flexShrink: 0,
+            boxShadow: theme === 'neon' ? '0 0 10px #6366f155' : 'none',
+          }}>
             {user?.email?.[0]?.toUpperCase() ?? 'U'}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{user?.email ?? 'User'}</p>
-            <p className="text-xs text-gray-400">{activeRole === 'TEACHER' ? 'Giáo viên' : 'Học sinh'}</p>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user?.email ?? 'User'}
+            </p>
+            <p style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+              {activeRole === 'TEACHER' ? 'Giáo viên' : 'Học sinh'}
+            </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Link href="/settings" className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
-            <Settings className="w-3.5 h-3.5" /> Cài đặt
+
+        <div style={{ display: 'flex', gap: 6 }}>
+          <Link
+            href="/settings"
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              padding: '7px 0', borderRadius: 8, border: '1px solid var(--border)',
+              textDecoration: 'none', fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)',
+              background: 'transparent', transition: 'all 0.15s',
+            }}
+          >
+            <Settings size={13} />
+            Cài đặt
           </Link>
           <button
             onClick={handleLogout}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+            style={{
+              flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              padding: '7px 0', borderRadius: 8, border: '1px solid #ef444422',
+              fontSize: 11, fontWeight: 600, color: '#ef4444',
+              background: 'transparent', cursor: 'pointer', transition: 'all 0.15s',
+            }}
           >
-            <LogOut className="w-3.5 h-3.5" /> Đăng xuất
+            <LogOut size={13} />
+            Đăng xuất
           </button>
         </div>
       </div>

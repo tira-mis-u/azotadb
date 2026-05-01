@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/components/providers/theme-provider';
 import { GraduationCap, Mail, Lock, Globe, Eye, EyeOff, ArrowRight, BookOpen, BarChart3, Users } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -24,6 +25,7 @@ const features = [
 ];
 
 export default function LoginPage() {
+  const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -59,9 +61,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--background)' }}>
       {/* Left Panel - Brand/Features */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900 relative overflow-hidden flex-col justify-between p-12">
+      <div 
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12"
+        style={{ 
+          background: theme === 'neon' 
+            ? 'linear-gradient(135deg, #020010, #050018)' 
+            : 'linear-gradient(135deg, #0f172a, #1e1b4b)' 
+        }}
+      >
         {/* Animated blobs */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <motion.div
@@ -127,7 +136,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-950">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6" style={{ backgroundColor: 'var(--background)' }}>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -139,11 +148,11 @@ export default function LoginPage() {
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
               <GraduationCap className="w-5 h-5 text-white" />
             </div>
-            <span className="font-bold text-gray-900 dark:text-white">AzotaDB</span>
+            <span className="font-bold" style={{ color: 'var(--foreground)' }}>AzotaDB</span>
           </div>
 
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Chào mừng trở lại!</h2>
-          <p className="text-gray-500 dark:text-gray-400 mb-8">Đăng nhập để tiếp tục hành trình học tập.</p>
+          <h2 className="text-3xl font-bold mb-1" style={{ color: 'var(--foreground)' }}>Chào mừng trở lại!</h2>
+          <p style={{ color: 'var(--muted-foreground)' }} className="mb-8">Đăng nhập để tiếp tục hành trình học tập.</p>
 
           {/* Google Login */}
           <motion.button
@@ -151,30 +160,40 @@ export default function LoginPage() {
             whileTap={{ scale: 0.99 }}
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 font-medium text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-all mb-6 shadow-sm disabled:opacity-60"
+            style={{ 
+              backgroundColor: 'var(--card)', 
+              borderColor: 'var(--border)', 
+              color: 'var(--foreground)' 
+            }}
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border font-medium text-sm transition-all mb-6 shadow-sm disabled:opacity-60"
           >
             <Globe className="w-5 h-5" />
             {googleLoading ? 'Đang chuyển hướng...' : 'Tiếp tục với Google'}
           </motion.button>
 
           <div className="relative flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
-            <span className="text-gray-400 text-xs font-medium">HOẶC</span>
-            <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
+            <span style={{ color: 'var(--muted-foreground)' }} className="text-xs font-medium">HOẶC</span>
+            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email</label>
+              <label style={{ color: 'var(--foreground)' }} className="block text-sm font-medium mb-1.5">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   {...register('email')}
                   type="email"
                   placeholder="name@example.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                  style={{ 
+                    backgroundColor: 'var(--input)', 
+                    borderColor: 'var(--border)', 
+                    color: 'var(--foreground)' 
+                  }}
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
                 />
               </div>
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
@@ -183,8 +202,8 @@ export default function LoginPage() {
             {/* Password */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Mật khẩu</label>
-                <Link href="/forgot-password" className="text-xs text-indigo-600 hover:text-indigo-700">Quên mật khẩu?</Link>
+                <label style={{ color: 'var(--foreground)' }} className="block text-sm font-medium">Mật khẩu</label>
+                <Link href="/forgot-password" style={{ color: 'var(--primary)' }} className="text-xs hover:underline">Quên mật khẩu?</Link>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -192,7 +211,12 @@ export default function LoginPage() {
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                  style={{ 
+                    backgroundColor: 'var(--input)', 
+                    borderColor: 'var(--border)', 
+                    color: 'var(--foreground)' 
+                  }}
+                  className="w-full pl-10 pr-10 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
                 />
                 <button
                   type="button"
@@ -210,7 +234,8 @@ export default function LoginPage() {
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 text-sm"
+                style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                className="p-3 rounded-xl border text-red-600 text-sm"
               >
                 {serverError}
               </motion.div>
@@ -221,7 +246,12 @@ export default function LoginPage() {
               whileTap={{ scale: 0.99 }}
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-60"
+              style={{ 
+                backgroundColor: 'var(--primary)', 
+                color: 'var(--primary-foreground)',
+                boxShadow: theme === 'neon' ? '0 0 15px var(--primary)' : '0 4px 6px -1px rgba(99, 102, 241, 0.4)'
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition-all disabled:opacity-60"
             >
               {isLoading ? (
                 <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -234,9 +264,9 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
+          <p style={{ color: 'var(--muted-foreground)' }} className="text-center text-sm mt-6">
             Chưa có tài khoản?{' '}
-            <Link href="/register" className="text-indigo-600 font-medium hover:text-indigo-700">
+            <Link href="/register" style={{ color: 'var(--primary)' }} className="font-medium hover:underline">
               Đăng ký ngay
             </Link>
           </p>

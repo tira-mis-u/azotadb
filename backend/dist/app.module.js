@@ -15,6 +15,8 @@ const auth_module_1 = require("./auth/auth.module");
 const exam_module_1 = require("./exam/exam.module");
 const submission_module_1 = require("./submission/submission.module");
 const prisma_module_1 = require("./prisma/prisma.module");
+const dashboard_module_1 = require("./dashboard/dashboard.module");
+const parser_module_1 = require("./parser/parser.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -26,6 +28,8 @@ exports.AppModule = AppModule = __decorate([
             exam_module_1.ExamModule,
             submission_module_1.SubmissionModule,
             prisma_module_1.PrismaModule,
+            dashboard_module_1.DashboardModule,
+            parser_module_1.ParserModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],
