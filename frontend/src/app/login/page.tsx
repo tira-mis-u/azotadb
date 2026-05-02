@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/components/providers/theme-provider';
 import { GraduationCap, Mail, Lock, Globe, Eye, EyeOff, ArrowRight, BookOpen, BarChart3, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const loginSchema = z.object({
   email: z.string().email('Email không hợp lệ'),
@@ -19,9 +20,9 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 const features = [
-  { icon: BookOpen, label: 'Kho đề thi đa dạng', desc: '1000+ đề từ các trường' },
-  { icon: BarChart3, label: 'Phân tích kết quả', desc: 'Theo dõi tiến độ học tập' },
-  { icon: Users, label: 'Cộng đồng học tập', desc: 'Kết nối với 50,000+ học sinh' },
+  { icon: BookOpen, label: 'Kho đề thi đa dạng', desc: '1000+ đề từ các trường top' },
+  { icon: BarChart3, label: 'Phân tích kết quả', desc: 'Theo dõi lộ trình học tập' },
+  { icon: Users, label: 'Cộng đồng học tập', desc: 'Kết nối 50,000+ học viên' },
 ];
 
 export default function LoginPage() {
@@ -61,217 +62,214 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: 'var(--background)' }}>
+    <div className="min-h-screen flex bg-background selection:bg-primary/30">
       {/* Left Panel - Brand/Features */}
-      <div 
-        className="hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-12"
-        style={{ 
-          background: theme === 'neon' 
-            ? 'linear-gradient(135deg, #020010, #050018)' 
-            : 'linear-gradient(135deg, #0f172a, #1e1b4b)' 
-        }}
-      >
-        {/* Animated blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className={cn(
+        "hidden lg:flex lg:w-1/2 relative overflow-hidden flex-col justify-between p-16 transition-all duration-700",
+        theme === 'neon' 
+          ? "bg-linear-to-br from-[#020010] to-[#050018]" 
+          : "bg-linear-to-br from-slate-950 to-indigo-950"
+      )}>
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-50">
           <motion.div
-            animate={{ scale: [1, 1.2, 1], rotate: [0, 30, 0] }}
-            transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-            className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], x: [0, 100, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
+            className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px]"
           />
           <motion.div
-            animate={{ scale: [1.2, 1, 1.2], rotate: [0, -20, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-            className="absolute -bottom-24 -right-24 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"
+            animate={{ scale: [1.2, 1, 1.2], rotate: [0, -60, 0], y: [0, 100, 0] }}
+            transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+            className="absolute -bottom-32 -right-32 w-[400px] h-[400px] bg-cyan-500/10 rounded-full blur-[100px]"
           />
         </div>
 
-        {/* Logo */}
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 bg-white/10 backdrop-blur border border-white/20 rounded-xl flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-white" />
+        {/* Logo Section */}
+        <div className="relative z-10 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-12 h-12 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center shadow-2xl">
+              <GraduationCap className="w-7 h-7 text-white" />
             </div>
-            <span className="text-white font-bold text-xl">AzotaDB</span>
+            <span className="text-white font-black text-2xl tracking-tighter uppercase">AzotaDB</span>
           </div>
-          <p className="text-indigo-300 text-sm">Hệ thống luyện đề thi thông minh</p>
+          <p className="text-indigo-300 font-bold text-sm tracking-widest uppercase opacity-80">Smart Learning Ecosystem</p>
         </div>
 
-        {/* Main headline */}
-        <div className="relative z-10">
+        {/* Content Section */}
+        <div className="relative z-10 max-w-lg">
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-4xl font-bold text-white leading-tight mb-4"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-5xl font-black text-white leading-[1.1] mb-6 tracking-tighter"
           >
             Nâng tầm kết quả học tập của bạn
           </motion.h1>
-          <p className="text-indigo-300 text-lg mb-10">
-            Luyện đề thi trực tuyến, chấm bài tự động, phân tích điểm yếu và cải thiện kỹ năng mỗi ngày.
+          <p className="text-indigo-200 text-xl mb-12 font-medium leading-relaxed opacity-90">
+            Luyện đề thông minh, chấm bài tức thì và phân tích chuyên sâu năng lực mỗi ngày.
           </p>
 
-          {/* Feature list */}
-          <div className="flex flex-col gap-4">
+          <div className="grid gap-4">
             {features.map(({ icon: Icon, label, desc }, i) => (
               <motion.div
                 key={label}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.1 }}
-                className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 backdrop-blur border border-white/10"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + i * 0.1 }}
+                className="flex items-center gap-5 p-5 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 group hover:bg-white/10 transition-all duration-300"
               >
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-indigo-300" />
+                <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+                  <Icon className="w-6 h-6 text-indigo-300" />
                 </div>
                 <div>
-                  <p className="text-white font-medium text-sm">{label}</p>
-                  <p className="text-indigo-400 text-xs">{desc}</p>
+                  <p className="text-white font-black text-sm uppercase tracking-wide">{label}</p>
+                  <p className="text-indigo-300/80 text-xs font-bold mt-0.5">{desc}</p>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
 
-        <p className="relative z-10 text-indigo-500 text-xs">© 2026 AzotaDB. All rights reserved.</p>
+        <div className="relative z-10 flex items-center justify-between">
+           <p className="text-indigo-500/50 text-[10px] font-black uppercase tracking-[0.2em]">© 2026 AzotaDB Corporation</p>
+           <div className="flex gap-4 opacity-50">
+              <div className="w-1.5 h-1.5 rounded-full bg-white" />
+              <div className="w-1.5 h-1.5 rounded-full bg-white" />
+              <div className="w-1.5 h-1.5 rounded-full bg-white" />
+           </div>
+        </div>
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6" style={{ backgroundColor: 'var(--background)' }}>
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background relative overflow-hidden">
+        {/* Subtle background glow for Neon theme */}
+        {theme === 'neon' && (
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,255,255,0.05)_0%,transparent_70%)] pointer-events-none" />
+        )}
+        
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md"
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-[420px] relative z-10"
         >
           {/* Mobile logo */}
-          <div className="flex lg:hidden items-center gap-2 mb-8">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <GraduationCap className="w-5 h-5 text-white" />
+          <div className="flex lg:hidden items-center gap-3 mb-10">
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-xl shadow-primary/20">
+              <GraduationCap className="w-6 h-6 text-primary-foreground" />
             </div>
-            <span className="font-bold" style={{ color: 'var(--foreground)' }}>AzotaDB</span>
+            <span className="font-black text-2xl text-foreground tracking-tighter uppercase">AzotaDB</span>
           </div>
 
-          <h2 className="text-3xl font-bold mb-1" style={{ color: 'var(--foreground)' }}>Chào mừng trở lại!</h2>
-          <p style={{ color: 'var(--muted-foreground)' }} className="mb-8">Đăng nhập để tiếp tục hành trình học tập.</p>
+          <h2 className="text-4xl font-black text-foreground mb-2 tracking-tighter">Chào mừng trở lại!</h2>
+          <p className="text-muted-foreground font-bold mb-10">Tiếp tục hành trình chinh phục tri thức của bạn.</p>
 
-          {/* Google Login */}
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+          {/* Social Login */}
+          <button
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            style={{ 
-              backgroundColor: 'var(--card)', 
-              borderColor: 'var(--border)', 
-              color: 'var(--foreground)' 
-            }}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border font-medium text-sm transition-all mb-6 shadow-sm disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-card border border-border text-foreground font-black text-xs uppercase tracking-widest transition-all hover:bg-muted hover:border-primary/30 shadow-sm disabled:opacity-50"
           >
-            <Globe className="w-5 h-5" />
-            {googleLoading ? 'Đang chuyển hướng...' : 'Tiếp tục với Google'}
-          </motion.button>
+            <Globe className="w-5 h-5 text-primary" />
+            {googleLoading ? 'Đang kết nối...' : 'Tiếp tục với Google'}
+          </button>
 
-          <div className="relative flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
-            <span style={{ color: 'var(--muted-foreground)' }} className="text-xs font-medium">HOẶC</span>
-            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
+          <div className="relative flex items-center gap-4 my-8">
+            <div className="flex-1 h-px bg-border/60" />
+            <span className="text-[10px] font-black text-muted-foreground tracking-[0.2em]">HOẶC</span>
+            <div className="flex-1 h-px bg-border/60" />
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Email */}
-            <div>
-              <label style={{ color: 'var(--foreground)' }} className="block text-sm font-medium mb-1.5">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">Email của bạn</label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <input
                   {...register('email')}
                   type="email"
                   placeholder="name@example.com"
-                  style={{ 
-                    backgroundColor: 'var(--input)', 
-                    borderColor: 'var(--border)', 
-                    color: 'var(--foreground)' 
-                  }}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                  className="w-full pl-12 pr-6 py-4 bg-background border border-border rounded-2xl font-bold text-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/60"
                 />
               </div>
-              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+              {errors.email && <p className="text-destructive text-xs font-bold mt-1 ml-1">{errors.email.message}</p>}
             </div>
 
-            {/* Password */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label style={{ color: 'var(--foreground)' }} className="block text-sm font-medium">Mật khẩu</label>
-                <Link href="/forgot-password" style={{ color: 'var(--primary)' }} className="text-xs hover:underline">Quên mật khẩu?</Link>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <label className="block text-[10px] font-black text-muted-foreground uppercase tracking-widest">Mật khẩu</label>
+                <Link href="/forgot-password" size="sm" className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline">Quên mật khẩu?</Link>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <div className="relative group">
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                 <input
                   {...register('password')}
                   type={showPassword ? 'text' : 'password'}
                   placeholder="••••••••"
-                  style={{ 
-                    backgroundColor: 'var(--input)', 
-                    borderColor: 'var(--border)', 
-                    color: 'var(--foreground)' 
-                  }}
-                  className="w-full pl-10 pr-10 py-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm"
+                  className="w-full pl-12 pr-12 py-4 bg-background border border-border rounded-2xl font-bold text-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/60"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+              {errors.password && <p className="text-destructive text-xs font-bold mt-1 ml-1">{errors.password.message}</p>}
             </div>
 
-            {/* Server error */}
             {serverError && (
               <motion.div
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-                className="p-3 rounded-xl border text-red-600 text-sm"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-4 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-xs font-bold leading-relaxed"
               >
                 {serverError}
               </motion.div>
             )}
 
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+            <button
               type="submit"
               disabled={isLoading}
-              style={{ 
-                backgroundColor: 'var(--primary)', 
-                color: 'var(--primary-foreground)',
-                boxShadow: theme === 'neon' ? '0 0 15px var(--primary)' : '0 4px 6px -1px rgba(99, 102, 241, 0.4)'
-              }}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-medium text-sm transition-all disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-3 py-4.5 px-6 rounded-2xl bg-primary text-primary-foreground font-black text-sm uppercase tracking-[0.1em] transition-all hover:scale-[1.02] shadow-2xl shadow-primary/30 disabled:opacity-50"
             >
               {isLoading ? (
-                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-                </svg>
+                 <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <>Đăng nhập <ArrowRight className="w-4 h-4" /></>
+                <>ĐĂNG NHẬP NGAY <ArrowRight className="w-5 h-5" /></>
               )}
-            </motion.button>
+            </button>
           </form>
 
-          <p style={{ color: 'var(--muted-foreground)' }} className="text-center text-sm mt-6">
+          <p className="text-center text-sm font-bold text-muted-foreground mt-10">
             Chưa có tài khoản?{' '}
-            <Link href="/register" style={{ color: 'var(--primary)' }} className="font-medium hover:underline">
-              Đăng ký ngay
+            <Link href="/register" className="text-primary hover:underline font-black">
+              ĐĂNG KÝ MIỄN PHÍ
             </Link>
           </p>
         </motion.div>
       </div>
     </div>
+  );
+}
+
+function Loader2(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
   );
 }

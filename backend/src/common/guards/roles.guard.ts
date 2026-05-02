@@ -20,8 +20,6 @@ export class RolesGuard implements CanActivate {
     // Dual-Role logic: check activeRole first, then fallback to base role
     // A TEACHER can always act as STUDENT; check against activeRole for UI-mode gating
     const effectiveRole = user.activeRole || user.role;
-    return requiredRoles.some(
-      (r) => r === effectiveRole || r === user.role
-    );
+    return requiredRoles.some((r) => r === effectiveRole || r === user.role);
   }
 }

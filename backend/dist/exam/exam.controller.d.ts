@@ -9,7 +9,8 @@ export declare class ExamController {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -22,9 +23,11 @@ export declare class ExamController {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     findByTeacher(userId: string): Promise<({
@@ -38,7 +41,8 @@ export declare class ExamController {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -51,9 +55,11 @@ export declare class ExamController {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     })[]>;
     getTeacherQuestions(userId: string): Promise<({
@@ -69,6 +75,43 @@ export declare class ExamController {
         explanation: string | null;
         metadata: import("@prisma/client/runtime/library").JsonValue;
     })[]>;
+    findByPublicId(publicId: string): Promise<({
+        questions: {
+            id: string;
+            examId: string;
+            type: string;
+            content: string;
+            points: number;
+            explanation: string | null;
+            metadata: import("@prisma/client/runtime/library").JsonValue;
+        }[];
+    } & {
+        id: string;
+        passwordHash: string | null;
+        createdAt: Date;
+        title: string;
+        description: string | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
+        startTime: Date | null;
+        endTime: Date | null;
+        mode: import("@prisma/client").$Enums.ExamMode;
+        examCode: string | null;
+        isTimed: boolean;
+        requiresPassword: boolean;
+        strictMode: boolean;
+        fullscreenRequired: boolean;
+        maxAttempts: number;
+        allowScoreView: boolean;
+        allowAnswerReview: boolean;
+        maxScore: number;
+        requireLogin: boolean;
+        status: import("@prisma/client").$Enums.ExamStatus;
+        shuffleQuestions: boolean;
+        shuffleOptions: boolean;
+        publicId: string;
+        teacherId: string;
+    }) | null>;
     findOne(id: string, userId: string, role: string): Promise<({
         questions: {
             id: string;
@@ -85,7 +128,8 @@ export declare class ExamController {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -98,9 +142,11 @@ export declare class ExamController {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }) | null>;
     update(id: string, userId: string, dto: Partial<CreateExamDto>): Promise<{
@@ -109,7 +155,8 @@ export declare class ExamController {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -122,9 +169,11 @@ export declare class ExamController {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     remove(id: string, userId: string): Promise<{
@@ -133,7 +182,8 @@ export declare class ExamController {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -146,9 +196,11 @@ export declare class ExamController {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     duplicate(id: string, userId: string): Promise<{
@@ -157,7 +209,8 @@ export declare class ExamController {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -170,9 +223,11 @@ export declare class ExamController {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     toggleStatus(id: string, userId: string): Promise<{
@@ -181,7 +236,8 @@ export declare class ExamController {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -194,9 +250,11 @@ export declare class ExamController {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     addQuestions(id: string, userId: string, questions: any[]): Promise<[import("@prisma/client").Prisma.BatchPayload, import("@prisma/client").Prisma.BatchPayload]>;

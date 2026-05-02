@@ -16,7 +16,9 @@ export class ParserService {
   ) {}
 
   async processFile(fileId: string) {
-    const file = await this.prisma.uploadedFile.findUnique({ where: { id: fileId } });
+    const file = await this.prisma.uploadedFile.findUnique({
+      where: { id: fileId },
+    });
     if (!file) throw new Error('File not found');
 
     await this.prisma.uploadedFile.update({
@@ -26,7 +28,9 @@ export class ParserService {
 
     try {
       // 1. Download file content
-      const response = await axios.get(file.fileUrl, { responseType: 'arraybuffer' });
+      const response = await axios.get(file.fileUrl, {
+        responseType: 'arraybuffer',
+      });
       const buffer = Buffer.from(response.data);
 
       let extractedText = '';
@@ -41,7 +45,9 @@ export class ParserService {
         const data = await mammoth.extractRawText({ buffer });
         extractedText = data.value;
       } else if (['png', 'jpg', 'jpeg'].includes(extension)) {
-        const { data: { text } } = await Tesseract.recognize(buffer, 'vie+eng');
+        const {
+          data: { text },
+        } = await Tesseract.recognize(buffer, 'vie+eng');
         extractedText = text;
       } else {
         extractedText = buffer.toString('utf-8');
@@ -75,8 +81,10 @@ export class ParserService {
   }
 
   private async parseWithAI(text: string) {
-    const apiKey = this.configService.get('GEMINI_API_KEY') || this.configService.get('OPENAI_API_KEY');
-    
+    const apiKey =
+      this.configService.get('GEMINI_API_KEY') ||
+      this.configService.get('OPENAI_API_KEY');
+
     if (!apiKey) {
       this.logger.warn('AI API Key not found. Returning empty structure.');
       return { questions: [] };
@@ -84,7 +92,7 @@ export class ParserService {
 
     // This is a placeholder for actual AI call
     // In production, you would call OpenAI/Gemini API here
-    
+
     // Example prompt:
     /*
     Parse the following exam text into a JSON format:

@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, Home, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface BreadcrumbItem {
   label: string;
@@ -28,22 +29,30 @@ export function PageHeader({
   const router = useRouter();
 
   return (
-    <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="mb-8 flex flex-col gap-3 animate-in fade-in slide-in-from-top-2 duration-500">
       {/* Breadcrumbs */}
-      {(breadcrumbs.length > 0) && (
-        <nav style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <Link href="/dashboard" style={{ color: 'var(--muted-foreground)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+      {breadcrumbs.length > 0 && (
+        <nav className="flex items-center gap-2 px-1">
+          <Link 
+            href="/dashboard" 
+            className="text-muted-foreground hover:text-primary transition-colors flex items-center"
+          >
             <Home size={14} />
           </Link>
           {breadcrumbs.map((item, idx) => (
             <React.Fragment key={idx}>
-              <ChevronRight size={12} style={{ color: 'var(--muted-foreground)', opacity: 0.5 }} />
+              <ChevronRight size={12} className="text-muted-foreground opacity-50" />
               {item.href ? (
-                <Link href={item.href} style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)', textDecoration: 'none' }}>
+                <Link 
+                  href={item.href} 
+                  className="text-xs font-bold text-muted-foreground hover:text-primary transition-colors tracking-tight"
+                >
                   {item.label}
                 </Link>
               ) : (
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--foreground)' }}>{item.label}</span>
+                <span className="text-xs font-black text-foreground uppercase tracking-widest">
+                  {item.label}
+                </span>
               )}
             </React.Fragment>
           ))}
@@ -51,43 +60,23 @@ export function PageHeader({
       )}
 
       {/* Main row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-start gap-4">
           {backHref && (
             <button
               onClick={() => backHref === 'back' ? router.back() : router.push(backHref)}
               title="Quay lại"
-              style={{
-                marginTop: 4,
-                padding: '8px',
-                borderRadius: 10,
-                border: '1px solid var(--border)',
-                background: 'var(--card)',
-                color: 'var(--muted-foreground)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.15s ease',
-                flexShrink: 0,
-              }}
+              className="mt-1 p-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-primary hover:border-primary hover:bg-accent transition-all duration-200 shadow-xs flex-shrink-0"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={20} />
             </button>
           )}
-          <div>
-            <h1 style={{
-              fontSize: 26,
-              fontWeight: 900,
-              color: 'var(--foreground)',
-              letterSpacing: '-0.02em',
-              lineHeight: 1.2,
-              margin: 0,
-            }}>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-foreground tracking-tighter leading-none">
               {title}
             </h1>
             {description && (
-              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginTop: 5 }}>
+              <p className="text-sm font-medium text-muted-foreground max-w-2xl leading-relaxed">
                 {description}
               </p>
             )}
@@ -95,7 +84,7 @@ export function PageHeader({
         </div>
 
         {actions && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <div className="flex items-center gap-3 flex-shrink-0">
             {actions}
           </div>
         )}

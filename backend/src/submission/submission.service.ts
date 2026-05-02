@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 // Service for handling exam submissions
@@ -6,47 +11,86 @@ import { PrismaService } from '../prisma/prisma.service';
 export class SubmissionService {
   constructor(private prisma: PrismaService) {}
 
-  async startSubmission(examId: string, userId: string) {
+  private getDurationMs(value: number, unit: string): number {
+    const unitMap: Record<string, number> = {
+      MINUTE: 60 * 1000,
+      HOUR: 60 * 60 * 1000,
+      DAY: 24 * 60 * 60 * 1000,
+      WEEK: 7 * 24 * 60 * 60 * 1000,
+      MONTH: 30 * 24 * 60 * 60 * 1000,
+    };
+    return value * (unitMap[unit] || unitMap.MINUTE);
+  }
+
+  async startSubmission(
+    publicId: string,
+    userId?: string,
+    guestName?: string,
+    guestSessionId?: string,
+  ) {
     const exam: any = await this.prisma.exam.findUnique({
-      where: { id: examId }
+      where: { publicId },
     });
 
     if (!exam) throw new NotFoundException('Exam not found');
 
+    if (exam.requireLogin && !userId) {
+      throw new ForbiddenException('Vui lòng đăng nhập để làm bài thi này');
+    }
+
+    if (!userId && (!guestName || !guestSessionId)) {
+      throw new BadRequestException('Guest require name and session ID');
+    }
+
     // Tìm bài làm đang dang dở
     const inProgress = await this.prisma.submission.findFirst({
-      where: {
-        examId,
-        userId,
-        status: 'IN_PROGRESS'
-      }
+      where: userId
+        ? {
+            examId: exam.id,
+            userId,
+            status: 'IN_PROGRESS',
+          }
+        : {
+            examId: exam.id,
+            guestSessionId,
+            status: 'IN_PROGRESS',
+          },
     });
 
     if (inProgress) return inProgress;
 
     // Đếm số lần đã nộp
     const previousAttempts = await this.prisma.submission.count({
-      where: {
-        examId,
-        userId
-      }
+      where: userId
+        ? {
+            examId: exam.id,
+            userId,
+          }
+        : {
+            examId: exam.id,
+            guestSessionId,
+          },
     });
 
     if (exam.maxAttempts > 0 && previousAttempts >= exam.maxAttempts) {
-      throw new ForbiddenException(`Bạn đã hết số lần làm bài (Tối đa: ${exam.maxAttempts} lần)`);
+      throw new ForbiddenException(
+        `Bạn đã hết số lần làm bài (Tối đa: ${exam.maxAttempts} lần)`,
+      );
     }
 
     return (this.prisma.submission as any).create({
       data: {
-        examId,
+        examId: exam.id,
         userId,
+        guestName,
+        guestSessionId,
         status: 'IN_PROGRESS',
-        attemptNumber: previousAttempts + 1
+        attemptNumber: previousAttempts + 1,
       },
     });
   }
 
-  async getSubmission(id: string, userId: string) {
+  async getSubmission(id: string, userId?: string, guestSessionId?: string) {
     const submission = await this.prisma.submission.findUnique({
       where: { id },
       include: {
@@ -59,8 +103,16 @@ export class SubmissionService {
       },
     });
 
-    if (!submission || submission.userId !== userId) {
+    if (!submission) {
       throw new NotFoundException('Submission not found');
+    }
+
+    if (userId) {
+      if (submission.userId !== userId)
+        throw new ForbiddenException('Permission denied');
+    } else {
+      if (submission.guestSessionId !== guestSessionId)
+        throw new ForbiddenException('Guest Session Invalid');
     }
 
     // Hide correct answers for exam taking
@@ -68,23 +120,25 @@ export class SubmissionService {
       submission.exam.questions = submission.exam.questions.map((q) => {
         const metadata = q.metadata as any;
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { correct_answers, correct_answer, explanation, ...rest } = metadata;
+        const { correct_answers, correct_answer, explanation, ...rest } =
+          metadata;
         q.metadata = rest;
         return q;
       });
     } else if (submission.status === 'SUBMITTED') {
       const examAny = submission.exam as any;
-      if (!(examAny.allowAnswerReview)) {
+      if (!examAny.allowAnswerReview) {
         submission.exam.questions = submission.exam.questions.map((q) => {
           const metadata = q.metadata as any;
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { correct_answers, correct_answer, explanation, ...rest } = metadata;
+          const { correct_answers, correct_answer, explanation, ...rest } =
+            metadata;
           q.metadata = rest;
           return q;
         });
       }
-      
-      if (!(examAny.allowScoreView)) {
+
+      if (!examAny.allowScoreView) {
         submission.score = null;
       }
     }
@@ -92,32 +146,40 @@ export class SubmissionService {
     return submission;
   }
 
-  async autosave(submissionId: string, userId: string, questionId: string, answer: any) {
+  async autosave(submissionId: string, questionId: string, answer: any, userId?: string, guestSessionId?: string) {
     const submission = await this.prisma.submission.findUnique({
       where: { id: submissionId },
     });
 
-    if (!submission || submission.userId !== userId) {
-      throw new ForbiddenException('Permission denied');
+    if (!submission) throw new NotFoundException('Submission not found');
+
+    if (userId) {
+      if (submission.userId !== userId)
+        throw new ForbiddenException('Permission denied');
+    } else {
+      if (submission.guestSessionId !== guestSessionId)
+        throw new ForbiddenException('Guest Session Invalid');
+    }
+
+    if (!questionId) {
+      throw new BadRequestException('Question ID is required');
     }
 
     if (submission.status === 'SUBMITTED') {
       throw new BadRequestException('Exam already submitted');
     }
 
-    const existingAnswer = await this.prisma.submissionAnswer.findFirst({
-      where: { submissionId, questionId },
-    });
-
-    if (existingAnswer) {
-      return this.prisma.submissionAnswer.update({
-        where: { id: existingAnswer.id },
-        data: { studentAnswer: answer },
-      });
-    }
-
-    return this.prisma.submissionAnswer.create({
-      data: {
+    return this.prisma.submissionAnswer.upsert({
+      where: {
+        submissionId_questionId: {
+          submissionId,
+          questionId,
+        },
+      },
+      update: {
+        studentAnswer: answer,
+      },
+      create: {
         submissionId,
         questionId,
         studentAnswer: answer,
@@ -125,9 +187,18 @@ export class SubmissionService {
     });
   }
 
-  async submitExam(submissionId: string, userId: string, extraData?: { candidateNumber?: string; examCode?: string; violations?: any[] }) {
+  async submitExam(
+    submissionId: string,
+    userId?: string,
+    extraData?: {
+      candidateNumber?: string;
+      examCode?: string;
+      violations?: any[];
+      guestSessionId?: string;
+    },
+  ) {
     const violations = extraData?.violations || [];
-    
+
     return this.prisma.$transaction(async (tx) => {
       const submission = await tx.submission.findUnique({
         where: { id: submissionId },
@@ -137,8 +208,14 @@ export class SubmissionService {
         },
       });
 
-      if (!submission || submission.userId !== userId) {
-        throw new NotFoundException('Submission not found');
+      if (!submission) throw new NotFoundException('Submission not found');
+
+      if (userId) {
+        if (submission.userId !== userId)
+          throw new ForbiddenException('Permission denied');
+      } else {
+        if (submission.guestSessionId !== extraData?.guestSessionId)
+          throw new ForbiddenException('Guest Session Invalid');
       }
       if (submission.status === 'SUBMITTED') {
         throw new BadRequestException('Already submitted');
@@ -146,11 +223,16 @@ export class SubmissionService {
 
       // Backend verification: Check if exam has ended (only if isTimed is true)
       const exam = submission.exam as any;
-      if (exam.isTimed && exam.duration) {
+      if (exam.isTimed && exam.durationValue) {
         const startTime = new Date(submission.startTime).getTime();
-        const durationMs = (exam.duration + 2) * 60 * 1000; // Allow 2 mins grace period
-        if (Date.now() > startTime + durationMs) {
-          // Auto-submit if time exceeded
+        const durationMs = this.getDurationMs(
+          exam.durationValue,
+          exam.durationUnit || 'MINUTE',
+        );
+        const gracePeriodMs = 2 * 60 * 1000; // 2 mins grace
+
+        if (Date.now() > startTime + durationMs + gracePeriodMs) {
+          // You could throw an error or handle auto-submit logic here
         }
       }
 
@@ -158,7 +240,9 @@ export class SubmissionService {
       let earnedPoints = 0;
 
       for (const question of submission.exam.questions) {
-        const studentAnsRecord = submission.answers.find((a) => a.questionId === question.id);
+        const studentAnsRecord = submission.answers.find(
+          (a) => a.questionId === question.id,
+        );
         const studentAns = studentAnsRecord?.studentAnswer;
         const metadata = question.metadata as any;
         let isCorrect = false;
@@ -169,9 +253,12 @@ export class SubmissionService {
           const correctAnswers = metadata.correct_answers;
           if (Array.isArray(correctAnswers)) {
             if (Array.isArray(studentAns)) {
-              isCorrect = JSON.stringify([...studentAns].sort()) === JSON.stringify([...correctAnswers].sort());
+              isCorrect =
+                JSON.stringify([...studentAns].sort()) ===
+                JSON.stringify([...correctAnswers].sort());
             } else {
-              isCorrect = correctAnswers.length === 1 && correctAnswers[0] === studentAns;
+              isCorrect =
+                correctAnswers.length === 1 && correctAnswers[0] === studentAns;
             }
           } else {
             isCorrect = studentAns === correctAnswers;
@@ -179,10 +266,12 @@ export class SubmissionService {
         } else if (question.type === 'TRUE_FALSE_GROUP') {
           const statements = metadata.statements || [];
           const studentAnswers = studentAns || {}; // { stmtId: boolean }
-          
-          // Grading for TRUE_FALSE_GROUP: Usually all must be correct to get point, 
+
+          // Grading for TRUE_FALSE_GROUP: Usually all must be correct to get point,
           // or partial credit. Here we use "all correct" for simplicity.
-          isCorrect = statements.every((s: any) => studentAnswers[s.id] === s.correctAnswer);
+          isCorrect = statements.every(
+            (s: any) => studentAnswers[s.id] === s.correctAnswer,
+          );
         }
 
         totalPoints += question.points;
@@ -199,14 +288,15 @@ export class SubmissionService {
 
       // Calculate scaled score based on maxScore (e.g. 10.0)
       const maxScore = (submission.exam as any).maxScore || 10.0;
-      const finalScore = totalPoints > 0 ? (earnedPoints / totalPoints) * maxScore : 0;
+      const finalScore =
+        totalPoints > 0 ? (earnedPoints / totalPoints) * maxScore : 0;
 
       // Merge existing violations
       let finalViolations: any[] = [];
       try {
-        finalViolations = Array.isArray((submission as any).violations) 
-          ? (submission as any).violations 
-          : JSON.parse((submission as any).violations as string || '[]');
+        finalViolations = Array.isArray((submission as any).violations)
+          ? (submission as any).violations
+          : JSON.parse(((submission as any).violations as string) || '[]');
       } catch (e) {
         finalViolations = [];
       }
@@ -236,9 +326,10 @@ export class SubmissionService {
           select: {
             id: true,
             title: true,
-            duration: true,
-          }
-        }
+            durationValue: true,
+            durationUnit: true,
+          },
+        },
       },
       orderBy: { startTime: 'desc' },
     });

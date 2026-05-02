@@ -27,7 +27,10 @@ exports.AuthModule = AuthModule = __decorate([
                     let secret = (process.env.JWT_SECRET || 'secretKey').trim();
                     secret = secret.replace(/^["']|["']$/g, '');
                     return {
-                        secret: (secret.length >= 64 && (secret.includes('+') || secret.includes('/') || secret.endsWith('=')))
+                        secret: secret.length >= 64 &&
+                            (secret.includes('+') ||
+                                secret.includes('/') ||
+                                secret.endsWith('='))
                             ? Buffer.from(secret, 'base64')
                             : secret,
                         signOptions: {

@@ -11,6 +11,8 @@ import {
   Loader2, ArrowRight, Zap, Edit2, Save, X
 } from 'lucide-react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/utils';
 
 export default function UploadPage() {
   const { session } = useAuth();
@@ -83,6 +85,13 @@ export default function UploadPage() {
       const examRes = await axios.post('/api/exams', {
         title: `Đề thi từ file: ${file?.name || 'Chưa đặt tên'}`,
         duration: 60,
+        mode: 'STANDARD',
+        strictMode: false,
+        fullscreenRequired: false,
+        maxAttempts: 0,
+        allowScoreView: true,
+        allowAnswerReview: true,
+        maxScore: 10.0,
       }, {
         headers: { Authorization: `Bearer ${session.access_token}` }
       });
@@ -98,12 +107,16 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Upload & OCR AI</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Tự động chuyển đổi file PDF, Hình ảnh, Word thành đề thi trực tuyến.</p>
-      </div>
+    <div className="p-8 max-w-5xl mx-auto space-y-10 animate-in fade-in duration-500">
+      <PageHeader 
+        title="Upload & OCR AI" 
+        description="Tự động chuyển đổi file PDF, Hình ảnh, Word thành đề thi trực tuyến bằng trí tuệ nhân tạo."
+        backHref="/dashboard"
+        breadcrumbs={[
+          { label: 'Công cụ giáo viên', href: '#' },
+          { label: 'Upload & OCR AI' }
+        ]}
+      />
 
       <AnimatePresence mode="wait">
         {status === 'IDLE' || status === 'UPLOADING' || status === 'PROCESSING' || status === 'ERROR' ? (
@@ -112,25 +125,30 @@ export default function UploadPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-12 border-2 border-dashed border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center text-center"
+            className="bg-card border border-border rounded-[3rem] p-16 shadow-2xl shadow-primary/5 flex flex-col items-center text-center space-y-8"
           >
-            <div className={`w-20 h-20 rounded-3xl mb-6 flex items-center justify-center transition-all ${
+            <div className={cn(
+              "w-24 h-24 rounded-[2rem] flex items-center justify-center transition-all duration-500 shadow-inner",
               status === 'UPLOADING' || status === 'PROCESSING'
-                ? 'bg-indigo-600 text-white animate-pulse'
-                : 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400'
-            }`}>
+                ? 'bg-primary text-primary-foreground animate-pulse'
+                : 'bg-muted text-primary'
+            )}>
               {status === 'UPLOADING' || status === 'PROCESSING' ? (
-                <Loader2 className="w-10 h-10 animate-spin" />
+                <Loader2 className="w-12 h-12 animate-spin" />
               ) : (
-                <Upload className="w-10 h-10" />
+                <Upload className="w-12 h-12" />
               )}
             </div>
 
-            {status === 'IDLE' ? (
-              <>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Tải file đề thi của bạn lên</h2>
-                <p className="text-sm text-gray-500 mb-8 max-w-xs">Hỗ trợ định dạng PDF, DOCX, JPG, PNG. AI sẽ tự động nhận diện câu hỏi và đáp án.</p>
-                
+            <div className="space-y-3">
+              <h2 className="text-2xl font-black text-foreground uppercase tracking-tight">Tải file đề thi của bạn</h2>
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] max-w-xs mx-auto opacity-70">
+                HỖ TRỢ PDF, DOCX, JPG, PNG. AI SẼ TỰ ĐỘNG NHẬN DIỆN CÂU HỎI & ĐÁP ÁN.
+              </p>
+            </div>
+
+            {status === 'IDLE' && (
+              <div className="w-full max-w-md space-y-6">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -140,103 +158,138 @@ export default function UploadPage() {
                 />
                 
                 {file ? (
-                  <div className="flex flex-col items-center gap-4 w-full max-w-sm">
-                    <div className="w-full p-4 rounded-2xl bg-gray-50 dark:bg-gray-800 flex items-center gap-3 border border-gray-100 dark:border-gray-700">
-                      <FileText className="w-6 h-6 text-indigo-500" />
-                      <div className="flex-1 text-left">
-                        <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{file.name}</p>
-                        <p className="text-[10px] text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  <div className="space-y-4 animate-in zoom-in-95">
+                    <div className="w-full p-6 rounded-2xl bg-muted/50 flex items-center gap-4 border border-border shadow-inner">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                        <FileText className="w-6 h-6" />
                       </div>
-                      <button onClick={() => setFile(null)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg text-gray-400">
-                        <X className="w-4 h-4" />
+                      <div className="flex-1 text-left min-w-0">
+                        <p className="text-sm font-black text-foreground truncate uppercase tracking-tight">{file.name}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-0.5">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                      <button onClick={() => setFile(null)} className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-lg text-muted-foreground transition-all">
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
                     <button
                       onClick={handleUpload}
-                      className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
+                      className="w-full py-5 rounded-2xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-[0.2em] transition-all shadow-2xl shadow-primary/30 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3"
                     >
-                      Bắt đầu xử lý AI <Zap className="w-4 h-4" />
+                      BẮT ĐẦU PHÂN TÍCH AI <Zap className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="px-8 py-3.5 rounded-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+                    className="w-full py-12 rounded-[2rem] border-2 border-dashed border-border hover:border-primary/40 hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all flex flex-col items-center gap-4 group"
                   >
-                    Chọn file từ máy tính
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center group-hover:scale-110 transition-transform"><PlusCircle className="w-6 h-6" /></div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Chọn file từ máy tính của bạn</span>
                   </button>
                 )}
-              </>
-            ) : (
-              <div className="w-full max-w-sm space-y-4">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {status === 'UPLOADING' ? 'Đang tải file lên...' : 'AI đang phân tích đề thi...'}
-                </h2>
-                <p className="text-sm text-gray-500">Quá trình này có thể mất 10-30 giây tuỳ vào độ dài của đề.</p>
-                <div className="w-full h-2 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+              </div>
+            )}
+
+            {(status === 'UPLOADING' || status === 'PROCESSING') && (
+              <div className="w-full max-w-sm space-y-6">
+                <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden border border-border">
                   <motion.div
-                    className="h-full bg-indigo-600"
+                    className="h-full bg-primary"
                     animate={{ x: ['-100%', '100%'] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
                   />
                 </div>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.3em] animate-pulse">
+                  {status === 'UPLOADING' ? 'ĐANG TẢI DỮ LIỆU...' : 'HỆ THỐNG AI ĐANG XỬ LÝ...'}
+                </p>
               </div>
             )}
 
             {status === 'ERROR' && (
-              <div className="mt-6 flex items-center gap-2 p-3 rounded-xl bg-red-50 text-red-600 text-sm border border-red-100">
-                <AlertCircle className="w-4 h-4" /> {error}
+              <div className="w-full max-w-md p-6 rounded-2xl bg-destructive/10 text-destructive border border-destructive/20 flex flex-col items-center gap-4 animate-in shake-1">
+                <AlertCircle className="w-8 h-8" />
+                <p className="text-[10px] font-black uppercase tracking-widest text-center">{error}</p>
+                <button onClick={() => setStatus('IDLE')} className="px-6 py-2 bg-destructive text-destructive-foreground rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-destructive/20">THỬ LẠI</button>
               </div>
             )}
           </motion.div>
         ) : (
           <motion.div
             key="success-preview"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-6"
+            className="space-y-10"
           >
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 rounded-3xl p-6 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-900 flex items-center justify-center text-emerald-500 shadow-sm">
-                  <CheckCircle2 className="w-6 h-6" />
+            <div className="bg-success/10 border border-success/20 rounded-[2.5rem] p-10 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl shadow-success/5">
+              <div className="flex items-center gap-6">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-success border border-success/30 shadow-lg">
+                  <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">Xử lý thành công!</h2>
-                  <p className="text-sm text-emerald-700 dark:text-emerald-400">AI đã tìm thấy {parsedData?.questions?.length || 0} câu hỏi từ file của bạn.</p>
+                  <h2 className="text-2xl font-black text-foreground uppercase tracking-tight leading-none">Phân tích hoàn tất</h2>
+                  <p className="text-[10px] font-black text-success uppercase tracking-[0.2em] mt-3 opacity-80">AI ĐÃ TRÍCH XUẤT THÀNH CÔNG {parsedData?.questions?.length || 0} CÂU HỎI.</p>
                 </div>
               </div>
               <button
                 onClick={handleSaveExam}
-                className="px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2"
+                className="w-full md:w-auto px-8 py-4 rounded-2xl bg-success text-white font-black text-xs uppercase tracking-widest transition-all shadow-2xl shadow-success/30 hover:scale-105 active:scale-95 flex items-center justify-center gap-3"
               >
-                Tạo đề thi & Chỉnh sửa <ArrowRight className="w-4 h-4" />
+                TẠO ĐỀ THI NGAY <ArrowRight className="w-5 h-5" />
               </button>
             </div>
 
             {/* Preview Questions */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest px-2">Xem trước kết quả</h3>
-              {parsedData?.questions?.map((q: any, i: number) => (
-                <div key={i} className="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-lg">Câu {i + 1}</span>
-                    <span className="text-[10px] text-gray-400 uppercase font-bold">{q.type}</span>
-                  </div>
-                  <p className="text-sm text-gray-800 dark:text-gray-200 mb-4">{q.content}</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {q.metadata?.choices?.map((c: any) => (
-                      <div key={c.id} className={`p-2.5 rounded-xl border text-xs flex items-center gap-2 ${
-                        q.metadata.correct_answers.includes(c.id)
-                          ? 'bg-emerald-50 border-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400'
-                          : 'bg-gray-50/50 border-transparent text-gray-500'
-                      }`}>
-                        <span className="font-bold">{c.id}.</span> {c.content}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3 px-2">
+                 <div className="w-1 h-4 bg-primary rounded-full" />
+                 <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">XEM TRƯỚC KẾT QUẢ TRÍCH XUẤT</h3>
+              </div>
+              
+              <div className="grid gap-6">
+                {parsedData?.questions?.map((q: any, i: number) => (
+                  <motion.div 
+                    key={i} 
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="bg-card rounded-[2rem] p-8 border border-border shadow-xl shadow-primary/5 hover:border-primary/20 transition-all group"
+                  >
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-3">
+                        <span className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center text-xs font-black shadow-inner">
+                          {i + 1}
+                        </span>
+                        <span className="text-[9px] font-black text-muted-foreground uppercase tracking-widest border border-border px-3 py-1 rounded-lg">
+                          {q.type}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                    </div>
+                    
+                    <p className="text-base font-bold text-foreground leading-relaxed mb-8">{q.content}</p>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {q.metadata?.choices?.map((c: any) => {
+                        const isCorrect = q.metadata.correct_answers.includes(c.id);
+                        return (
+                          <div key={c.id} className={cn(
+                            "p-4 rounded-xl border text-xs font-bold transition-all flex items-center gap-4",
+                            isCorrect
+                              ? "bg-success/5 border-success/30 text-success shadow-lg shadow-success/5"
+                              : "bg-muted/30 border-border text-muted-foreground opacity-60"
+                          )}>
+                            <span className={cn(
+                              "w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-black shadow-sm",
+                              isCorrect ? "bg-success text-white" : "bg-muted text-muted-foreground"
+                            )}>{c.id}</span>
+                            {c.content}
+                            {isCorrect && <CheckCircle2 className="w-4 h-4 ml-auto" />}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}
@@ -244,3 +297,8 @@ export default function UploadPage() {
     </div>
   );
 }
+
+// Helper icon not imported before
+const PlusCircle = ({ className, size = 24 }: any) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+);

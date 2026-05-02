@@ -63,7 +63,9 @@ let ParserService = ParserService_1 = class ParserService {
         this.configService = configService;
     }
     async processFile(fileId) {
-        const file = await this.prisma.uploadedFile.findUnique({ where: { id: fileId } });
+        const file = await this.prisma.uploadedFile.findUnique({
+            where: { id: fileId },
+        });
         if (!file)
             throw new Error('File not found');
         await this.prisma.uploadedFile.update({
@@ -71,7 +73,9 @@ let ParserService = ParserService_1 = class ParserService {
             data: { status: 'PROCESSING' },
         });
         try {
-            const response = await axios_1.default.get(file.fileUrl, { responseType: 'arraybuffer' });
+            const response = await axios_1.default.get(file.fileUrl, {
+                responseType: 'arraybuffer',
+            });
             const buffer = Buffer.from(response.data);
             let extractedText = '';
             const extension = file.fileUrl.split('.').pop()?.toLowerCase() || '';
@@ -84,7 +88,7 @@ let ParserService = ParserService_1 = class ParserService {
                 extractedText = data.value;
             }
             else if (['png', 'jpg', 'jpeg'].includes(extension)) {
-                const { data: { text } } = await Tesseract.recognize(buffer, 'vie+eng');
+                const { data: { text }, } = await Tesseract.recognize(buffer, 'vie+eng');
                 extractedText = text;
             }
             else {
@@ -114,7 +118,8 @@ let ParserService = ParserService_1 = class ParserService {
         }
     }
     async parseWithAI(text) {
-        const apiKey = this.configService.get('GEMINI_API_KEY') || this.configService.get('OPENAI_API_KEY');
+        const apiKey = this.configService.get('GEMINI_API_KEY') ||
+            this.configService.get('OPENAI_API_KEY');
         if (!apiKey) {
             this.logger.warn('AI API Key not found. Returning empty structure.');
             return { questions: [] };

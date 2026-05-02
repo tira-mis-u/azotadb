@@ -46,6 +46,7 @@ exports.ExamService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const bcrypt = __importStar(require("bcrypt"));
+const crypto = __importStar(require("crypto"));
 let ExamService = class ExamService {
     prisma;
     constructor(prisma) {
@@ -61,7 +62,8 @@ let ExamService = class ExamService {
                 title: dto.title,
                 description: dto.description,
                 isTimed: dto.isTimed ?? true,
-                duration: dto.duration,
+                durationValue: dto.durationValue,
+                durationUnit: dto.durationUnit || 'MINUTE',
                 startTime: dto.startTime,
                 endTime: dto.endTime,
                 mode: dto.mode || 'STANDARD',
@@ -76,6 +78,8 @@ let ExamService = class ExamService {
                 maxScore: dto.maxScore ?? 10.0,
                 teacherId: teacherId,
                 status: 'DRAFT',
+                requireLogin: dto.requireLogin || false,
+                publicId: crypto.randomBytes(8).toString('base64url'),
             },
         });
     }
@@ -84,9 +88,9 @@ let ExamService = class ExamService {
             where: { status: 'PUBLISHED' },
             include: {
                 teacher: { select: { email: true } },
-                _count: { select: { questions: true } }
+                _count: { select: { questions: true } },
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
         });
     }
     async findOne(id, userId, role) {
@@ -105,6 +109,26 @@ let ExamService = class ExamService {
                 delete metadata.explanation;
                 return q;
             });
+        }
+        return exam;
+    }
+    async findByPublicId(publicId, role) {
+        const exam = await this.prisma.exam.findUnique({
+            where: { publicId },
+            include: {
+                questions: true,
+            },
+        });
+        if (!exam)
+            return null;
+        if (role === 'STUDENT' || role === 'GUEST') {
+            exam.questions = exam.questions.map((q) => {
+                const metadata = q.metadata;
+                delete metadata.correct_answers;
+                delete metadata.explanation;
+                return q;
+            });
+            exam.passwordHash = undefined;
         }
         return exam;
     }
@@ -197,18 +221,18 @@ let ExamService = class ExamService {
             },
             include: {
                 exam: {
-                    select: { title: true }
-                }
+                    select: { title: true },
+                },
             },
             orderBy: {
-                exam: { createdAt: 'desc' }
-            }
+                exam: { createdAt: 'desc' },
+            },
         });
     }
     async updateQuestion(questionId, teacherId, data) {
         const question = await this.prisma.question.findUnique({
             where: { id: questionId },
-            include: { exam: { select: { teacherId: true } } }
+            include: { exam: { select: { teacherId: true } } },
         });
         if (!question)
             throw new common_1.NotFoundException('Question not found');
@@ -220,13 +244,13 @@ let ExamService = class ExamService {
                 content: data.content,
                 type: data.type,
                 metadata: data.metadata,
-            }
+            },
         });
     }
     async deleteQuestion(questionId, teacherId) {
         const question = await this.prisma.question.findUnique({
             where: { id: questionId },
-            include: { exam: { select: { teacherId: true } } }
+            include: { exam: { select: { teacherId: true } } },
         });
         if (!question)
             throw new common_1.NotFoundException('Question not found');

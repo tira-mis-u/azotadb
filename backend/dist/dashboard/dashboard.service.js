@@ -19,7 +19,7 @@ let DashboardService = class DashboardService {
     }
     async getTeacherStats(userId) {
         const db = this.prisma;
-        const [examCount, submissionCount, questionCount, avgScoreResult, submissions, recentExams] = await Promise.all([
+        const [examCount, submissionCount, questionCount, avgScoreResult, submissions, recentExams,] = await Promise.all([
             db.exam.count({ where: { teacherId: userId } }),
             db.submission.count({ where: { exam: { teacherId: userId } } }),
             db.question.count({ where: { exam: { teacherId: userId } } }),
@@ -29,7 +29,10 @@ let DashboardService = class DashboardService {
             }),
             db.submission.findMany({
                 where: { exam: { teacherId: userId }, status: 'SUBMITTED' },
-                include: { _count: { select: { answers: true } }, answers: { where: { isCorrect: true } } },
+                include: {
+                    _count: { select: { answers: true } },
+                    answers: { where: { isCorrect: true } },
+                },
             }),
             db.exam.findMany({
                 where: { teacherId: userId },
@@ -39,11 +42,13 @@ let DashboardService = class DashboardService {
         ]);
         let totalCorrect = 0;
         let totalAnswers = 0;
-        submissions.forEach(s => {
+        submissions.forEach((s) => {
             totalCorrect += s.answers.length;
             totalAnswers += s._count.answers;
         });
-        const accuracyRate = totalAnswers > 0 ? (totalCorrect / totalAnswers * 100).toFixed(1) : '0.0';
+        const accuracyRate = totalAnswers > 0
+            ? ((totalCorrect / totalAnswers) * 100).toFixed(1)
+            : '0.0';
         return {
             stats: {
                 exams: examCount,
@@ -52,7 +57,7 @@ let DashboardService = class DashboardService {
                 avgScore: avgScoreResult._avg.score?.toFixed(1) || '0.0',
                 accuracyRate,
             },
-            recentActivity: recentExams.map(exam => ({
+            recentActivity: recentExams.map((exam) => ({
                 id: exam.id,
                 title: exam.title,
                 createdAt: exam.createdAt,
@@ -79,7 +84,7 @@ let DashboardService = class DashboardService {
                 take: 5,
             }),
         ]);
-        const weakTopics = Array.from(new Set(wrongAnswers.map(a => a.question.metadata.topic || 'Chung'))).slice(0, 3);
+        const weakTopics = Array.from(new Set(wrongAnswers.map((a) => a.question.metadata.topic || 'Chung'))).slice(0, 3);
         return {
             stats: {
                 examsDone: submissionCount,
@@ -88,7 +93,7 @@ let DashboardService = class DashboardService {
                 bookmarks: 0,
             },
             weakTopics,
-            recentExams: recentSubmissions.map(s => ({
+            recentExams: recentSubmissions.map((s) => ({
                 id: s.id,
                 name: s.exam.title,
                 score: s.score?.toFixed(1) || 'N/A',

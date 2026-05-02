@@ -14,7 +14,8 @@ const class_validator_1 = require("class-validator");
 class CreateExamDto {
     title;
     description;
-    duration;
+    durationValue;
+    durationUnit;
     startTime;
     endTime;
     mode;
@@ -28,6 +29,7 @@ class CreateExamDto {
     allowScoreView;
     allowAnswerReview;
     maxScore;
+    requireLogin;
 }
 exports.CreateExamDto = CreateExamDto;
 __decorate([
@@ -42,9 +44,14 @@ __decorate([
 ], CreateExamDto.prototype, "description", void 0);
 __decorate([
     (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
-], CreateExamDto.prototype, "duration", void 0);
+], CreateExamDto.prototype, "durationValue", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateExamDto.prototype, "durationUnit", void 0);
 __decorate([
     (0, class_validator_1.IsDateString)(),
     (0, class_validator_1.IsOptional)(),
@@ -103,4 +110,8 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", Number)
 ], CreateExamDto.prototype, "maxScore", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateExamDto.prototype, "requireLogin", void 0);
 //# sourceMappingURL=create-exam.dto.js.map

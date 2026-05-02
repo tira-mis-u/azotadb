@@ -77,10 +77,7 @@ let AuthService = class AuthService {
         const db = this.prisma;
         let user = await db.user.findFirst({
             where: {
-                OR: [
-                    { authId: supabaseUser.authId },
-                    { email: supabaseUser.email },
-                ],
+                OR: [{ authId: supabaseUser.authId }, { email: supabaseUser.email }],
             },
         });
         if (!user) {
@@ -102,7 +99,9 @@ let AuthService = class AuthService {
         return user;
     }
     async register(dto) {
-        const existingUser = await this.prisma.user.findUnique({ where: { email: dto.email } });
+        const existingUser = await this.prisma.user.findUnique({
+            where: { email: dto.email },
+        });
         if (existingUser)
             throw new common_1.ConflictException('Email already exists');
         const hashedPassword = await bcrypt.hash(dto.password, 10);
@@ -117,7 +116,9 @@ let AuthService = class AuthService {
         });
     }
     async login(dto) {
-        const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+        const user = await this.prisma.user.findUnique({
+            where: { email: dto.email },
+        });
         if (!user || !user.passwordHash)
             throw new common_1.UnauthorizedException('Invalid credentials');
         const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);

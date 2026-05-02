@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsInt, IsOptional, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  IsOptional,
+  IsDateString,
+} from 'class-validator';
 
 export class CreateExamDto {
   @IsString()
@@ -10,8 +16,12 @@ export class CreateExamDto {
   description?: string;
 
   @IsInt()
-  @IsNotEmpty()
-  duration: number;
+  @IsOptional()
+  durationValue?: number;
+
+  @IsString()
+  @IsOptional()
+  durationUnit?: 'MINUTE' | 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
 
   @IsDateString()
   @IsOptional()
@@ -23,7 +33,7 @@ export class CreateExamDto {
 
   @IsString()
   @IsOptional()
-  mode?: 'STANDARD' | 'THPTQG';
+  mode?: 'PRACTICE' | 'STANDARD' | 'THPTQG';
 
   @IsString()
   @IsOptional()
@@ -57,4 +67,7 @@ export class CreateExamDto {
 
   @IsOptional()
   maxScore?: number;
+
+  @IsOptional()
+  requireLogin?: boolean;
 }

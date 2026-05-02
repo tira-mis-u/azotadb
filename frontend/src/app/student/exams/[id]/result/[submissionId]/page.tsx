@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import useSWR from 'swr';
 import axios from 'axios';
 import { useAuth } from '@/context/AuthContext';
@@ -14,14 +14,22 @@ const fetcher = (url: string, token: string) =>
 
 export default function ExamResultPage() {
   const { id: examId, submissionId } = useParams();
+  const searchParams = useSearchParams();
+  const guestSessionId = searchParams.get('guestSessionId');
   const { session } = useAuth();
   const router = useRouter();
   
   const [showDetails, setShowDetails] = useState(false);
 
   const { data: submission, error, isLoading } = useSWR(
-    session?.access_token && submissionId ? [`/api/submissions/${submissionId}`, session.access_token] : null,
-    ([url, token]) => fetcher(url, token)
+    (session?.access_token || guestSessionId) && submissionId 
+      ? [`/api/submissions/${submissionId}${guestSessionId ? `?guestSessionId=${guestSessionId}` : ''}`, session?.access_token] 
+      : null,
+    ([url, token]) => {
+      const headers: any = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      return axios.get(url, { headers }).then(res => res.data);
+    }
   );
 
   if (isLoading || !submission) {

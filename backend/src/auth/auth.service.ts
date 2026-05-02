@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -16,11 +20,11 @@ export class AuthService {
   async syncWithToken(token: string) {
     try {
       console.log('--- SYNC ATTEMPT ---');
-      const payload = this.jwtService.decode(token) as any;
+      const payload = this.jwtService.decode(token);
       console.log('Payload decoded:', payload?.email);
-      
+
       if (!payload) throw new Error('Token không hợp lệ hoặc rỗng');
-      
+
       const result = await this.syncSupabaseUser({
         authId: payload.sub,
         email: payload.email,
@@ -36,13 +40,10 @@ export class AuthService {
   // ─── Supabase Sync Logic ──────────────────────────────────────────────────
   async syncSupabaseUser(supabaseUser: { authId: string; email: string }) {
     const db: any = this.prisma; // Ép kiểu để tránh lỗi IDE cache
-    
+
     let user = await db.user.findFirst({
       where: {
-        OR: [
-          { authId: supabaseUser.authId },
-          { email: supabaseUser.email },
-        ],
+        OR: [{ authId: supabaseUser.authId }, { email: supabaseUser.email }],
       },
     });
 
@@ -69,12 +70,14 @@ export class AuthService {
 
   // ─── Legacy Email/Password Auth ───────────────────────────────────────────
   async register(dto: CreateAuthDto) {
-    const existingUser = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existingUser) throw new ConflictException('Email already exists');
 
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const db: any = this.prisma;
-    
+
     return db.user.create({
       data: {
         email: dto.email,
@@ -86,11 +89,18 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user || !user.passwordHash) throw new UnauthorizedException('Invalid credentials');
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (!user || !user.passwordHash)
+      throw new UnauthorizedException('Invalid credentials');
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!isPasswordValid) throw new UnauthorizedException('Invalid credentials');
+    const isPasswordValid = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
+    if (!isPasswordValid)
+      throw new UnauthorizedException('Invalid credentials');
 
     const payload = { sub: user.id, email: user.email, role: user.role };
     return {

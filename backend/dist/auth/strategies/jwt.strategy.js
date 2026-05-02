@@ -39,11 +39,8 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
             const db = this.prisma;
             const user = await db.user.findFirst({
                 where: {
-                    OR: [
-                        { authId: payload.sub },
-                        { email: payload.email }
-                    ]
-                }
+                    OR: [{ authId: payload.sub }, { email: payload.email }],
+                },
             });
             if (!user) {
                 return { authId: payload.sub, email: payload.email, isNew: true };
@@ -53,7 +50,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
                 authId: user['authId'],
                 email: user.email,
                 role: user.role,
-                activeRole: user['activeRole']
+                activeRole: user['activeRole'],
             };
         }
         catch (error) {

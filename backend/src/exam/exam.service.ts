@@ -1,7 +1,13 @@
-import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExamDto } from './dto/create-exam.dto';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class ExamService {
@@ -18,7 +24,8 @@ export class ExamService {
         title: dto.title,
         description: dto.description,
         isTimed: dto.isTimed ?? true,
-        duration: dto.duration,
+        durationValue: dto.durationValue,
+        durationUnit: dto.durationUnit || 'MINUTE',
         startTime: dto.startTime,
         endTime: dto.endTime,
         mode: dto.mode || 'STANDARD',
@@ -33,6 +40,8 @@ export class ExamService {
         maxScore: dto.maxScore ?? 10.0,
         teacherId: teacherId,
         status: 'DRAFT',
+        requireLogin: dto.requireLogin || false,
+        publicId: crypto.randomBytes(8).toString('base64url'), // generate encrypted-like link e.g. eXa82Ksd91xP
       },
     });
   }
@@ -40,11 +49,11 @@ export class ExamService {
   async findAll() {
     return this.prisma.exam.findMany({
       where: { status: 'PUBLISHED' },
-      include: { 
+      include: {
         teacher: { select: { email: true } },
-        _count: { select: { questions: true } }
+        _count: { select: { questions: true } },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     });
   }
 
@@ -71,10 +80,36 @@ export class ExamService {
     return exam;
   }
 
+  async findByPublicId(publicId: string, role: string) {
+    const exam = await this.prisma.exam.findUnique({
+      where: { publicId },
+      include: {
+        questions: true,
+      },
+    });
+
+    if (!exam) return null;
+
+    if (role === 'STUDENT' || role === 'GUEST') {
+      exam.questions = exam.questions.map((q) => {
+        const metadata = q.metadata as any;
+        delete metadata.correct_answers;
+        delete metadata.explanation;
+        return q;
+      });
+      // Hide sensitive data
+      (exam as any).passwordHash = undefined;
+    }
+
+    return exam;
+  }
+
   async update(id: string, teacherId: string, dto: Partial<CreateExamDto>) {
     const exam = await this.prisma.exam.findUnique({ where: { id } });
     if (!exam || exam.teacherId !== teacherId) {
-      throw new ForbiddenException('You do not have permission to edit this exam');
+      throw new ForbiddenException(
+        'You do not have permission to edit this exam',
+      );
     }
 
     return this.prisma.exam.update({
@@ -86,7 +121,9 @@ export class ExamService {
   async remove(id: string, teacherId: string) {
     const exam = await this.prisma.exam.findUnique({ where: { id } });
     if (!exam || exam.teacherId !== teacherId) {
-      throw new ForbiddenException('You do not have permission to delete this exam');
+      throw new ForbiddenException(
+        'You do not have permission to delete this exam',
+      );
     }
 
     return this.prisma.exam.delete({ where: { id } });
@@ -177,12 +214,12 @@ export class ExamService {
       },
       include: {
         exam: {
-          select: { title: true }
-        }
+          select: { title: true },
+        },
       },
       orderBy: {
-        exam: { createdAt: 'desc' }
-      }
+        exam: { createdAt: 'desc' },
+      },
     });
   }
 
@@ -190,11 +227,12 @@ export class ExamService {
     // Verify ownership via exam
     const question = await this.prisma.question.findUnique({
       where: { id: questionId },
-      include: { exam: { select: { teacherId: true } } }
+      include: { exam: { select: { teacherId: true } } },
     });
 
     if (!question) throw new NotFoundException('Question not found');
-    if (question.exam.teacherId !== teacherId) throw new ForbiddenException('Permission denied');
+    if (question.exam.teacherId !== teacherId)
+      throw new ForbiddenException('Permission denied');
 
     return this.prisma.question.update({
       where: { id: questionId },
@@ -202,18 +240,19 @@ export class ExamService {
         content: data.content,
         type: data.type,
         metadata: data.metadata,
-      }
+      },
     });
   }
 
   async deleteQuestion(questionId: string, teacherId: string) {
     const question = await this.prisma.question.findUnique({
       where: { id: questionId },
-      include: { exam: { select: { teacherId: true } } }
+      include: { exam: { select: { teacherId: true } } },
     });
 
     if (!question) throw new NotFoundException('Question not found');
-    if (question.exam.teacherId !== teacherId) throw new ForbiddenException('Permission denied');
+    if (question.exam.teacherId !== teacherId)
+      throw new ForbiddenException('Permission denied');
 
     return this.prisma.question.delete({ where: { id: questionId } });
   }

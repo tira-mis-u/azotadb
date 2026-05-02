@@ -14,11 +14,7 @@ export function questionToMarkdown(parsed: ParsedQuestion): string {
     });
   }
 
-  // Single True/False
-  if (parsed.type === 'TRUE_FALSE') {
-    markdown += `${parsed.correct_answer === true ? '*' : ''}Đúng\n`;
-    markdown += `${parsed.correct_answer === false ? '*' : ''}Sai\n`;
-  }
+
 
   // Group True/False
   if (parsed.type === 'TRUE_FALSE_GROUP' && parsed.statements) {

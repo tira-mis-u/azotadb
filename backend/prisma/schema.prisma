@@ -24,8 +24,17 @@ enum ExamStatus {
 }
 
 enum ExamMode {
+  PRACTICE
   STANDARD
   THPTQG
+}
+
+enum DurationUnit {
+  MINUTE
+  HOUR
+  DAY
+  WEEK
+  MONTH
 }
 
 model User {
@@ -74,7 +83,9 @@ model Exam {
   teacher     User        @relation("TeacherExams", fields: [teacherId], references: [id])
   
   isTimed     Boolean     @default(true)
-  duration    Int?        // minutes
+  durationValue Int?      // Giá trị số
+  durationUnit  DurationUnit? @default(MINUTE) // Đơn vị thời gian
+  
   startTime   DateTime?
   endTime     DateTime?
   status      ExamStatus  @default(DRAFT)
@@ -96,6 +107,10 @@ model Exam {
   // Password Protection
   requiresPassword   Boolean  @default(false)
   passwordHash       String?
+  
+  // Access Control & Security
+  requireLogin       Boolean  @default(false)
+  publicId           String   @unique @default(dbgenerated("gen_random_uuid()"))
   
   questions   Question[]
   submissions Submission[]
@@ -132,9 +147,13 @@ model TrueFalseStatement {
 model Submission {
   id          String    @id @default(uuid())
   examId      String
-  userId      String
+  userId      String?
   exam        Exam      @relation(fields: [examId], references: [id])
-  user        User      @relation(fields: [userId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
+  
+  // Guest fields
+  guestName       String?
+  guestSessionId  String?
   
   startTime   DateTime  @default(now())
   endTime     DateTime?
@@ -169,6 +188,8 @@ model SubmissionAnswer {
   studentAnswer Json?     // Lựa chọn của học sinh
   isCorrect    Boolean?
   pointsAwarded Float?
+
+  @@unique([submissionId, questionId])
 }
 
 model UploadedFile {

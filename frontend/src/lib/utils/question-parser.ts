@@ -1,6 +1,6 @@
 export interface ParsedQuestion {
   content: string;
-  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'TRUE_FALSE_GROUP' | 'ESSAY';
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE_GROUP' | 'ESSAY';
   choices?: { id: string; content: string }[];
   correct_answers?: string[];
   correct_answer?: boolean;
@@ -29,6 +29,12 @@ export function parseMarkdownToQuestion(markdown: string): ParsedQuestion {
     const trimmedLine = line.trim();
     
     if (trimmedLine.startsWith('``` id=')) continue;
+
+    // Safety fallback: If pasted bulk text into a single question parser,
+    // stop parsing if we hit ANOTHER question marker after we already started collecting answers.
+    if (/^(Câu|Bài)\s*\d+[:.]/i.test(trimmedLine) && foundAnswers) {
+      break;
+    }
 
     // Detect [a], [b], [c]... for TRUE_FALSE_GROUP
     const groupMatch = trimmedLine.match(/^\[([a-z])\]$/i);
@@ -68,17 +74,7 @@ export function parseMarkdownToQuestion(markdown: string): ParsedQuestion {
       continue;
     }
 
-    // Check Single True/False: *Đúng, Đúng, *Sai, Sai
-    const tfMatch = trimmedLine.match(/^(\*)?(Đúng|Sai)$/i);
-    if (tfMatch && !foundAnswers && !isGroupTF) {
-      foundAnswers = true;
-      isTrueFalse = true;
-      const [_, isCorrect, value] = tfMatch;
-      if (isCorrect) {
-        correctAnswers = [value.toLowerCase() === 'đúng' ? 'true' : 'false'];
-      }
-      continue;
-    }
+
 
     if (!foundAnswers) {
       contentLines.push(line);
@@ -105,14 +101,7 @@ export function parseMarkdownToQuestion(markdown: string): ParsedQuestion {
     };
   }
 
-  if (isTrueFalse) {
-    return {
-      content: finalContent,
-      type: 'TRUE_FALSE',
-      correct_answer: correctAnswers[0] === 'true',
-      id: customId
-    };
-  }
+
 
   return {
     content: finalContent,

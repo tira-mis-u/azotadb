@@ -9,7 +9,8 @@ export declare class ExamService {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -22,9 +23,11 @@ export declare class ExamService {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     findAll(): Promise<({
@@ -40,7 +43,8 @@ export declare class ExamService {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -53,9 +57,11 @@ export declare class ExamService {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     })[]>;
     findOne(id: string, userId: string, role: string): Promise<({
@@ -74,7 +80,8 @@ export declare class ExamService {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -87,9 +94,48 @@ export declare class ExamService {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
+        teacherId: string;
+    }) | null>;
+    findByPublicId(publicId: string, role: string): Promise<({
+        questions: {
+            id: string;
+            examId: string;
+            type: string;
+            content: string;
+            points: number;
+            explanation: string | null;
+            metadata: import("@prisma/client/runtime/library").JsonValue;
+        }[];
+    } & {
+        id: string;
+        passwordHash: string | null;
+        createdAt: Date;
+        title: string;
+        description: string | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
+        startTime: Date | null;
+        endTime: Date | null;
+        mode: import("@prisma/client").$Enums.ExamMode;
+        examCode: string | null;
+        isTimed: boolean;
+        requiresPassword: boolean;
+        strictMode: boolean;
+        fullscreenRequired: boolean;
+        maxAttempts: number;
+        allowScoreView: boolean;
+        allowAnswerReview: boolean;
+        maxScore: number;
+        requireLogin: boolean;
+        status: import("@prisma/client").$Enums.ExamStatus;
+        shuffleQuestions: boolean;
+        shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }) | null>;
     update(id: string, teacherId: string, dto: Partial<CreateExamDto>): Promise<{
@@ -98,7 +144,8 @@ export declare class ExamService {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -111,9 +158,11 @@ export declare class ExamService {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     remove(id: string, teacherId: string): Promise<{
@@ -122,7 +171,8 @@ export declare class ExamService {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -135,9 +185,11 @@ export declare class ExamService {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     duplicate(id: string, teacherId: string): Promise<{
@@ -146,7 +198,8 @@ export declare class ExamService {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -159,9 +212,11 @@ export declare class ExamService {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     toggleStatus(id: string, teacherId: string): Promise<{
@@ -170,7 +225,8 @@ export declare class ExamService {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -183,9 +239,11 @@ export declare class ExamService {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     }>;
     findByTeacher(teacherId: string): Promise<({
@@ -199,7 +257,8 @@ export declare class ExamService {
         createdAt: Date;
         title: string;
         description: string | null;
-        duration: number | null;
+        durationValue: number | null;
+        durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         startTime: Date | null;
         endTime: Date | null;
         mode: import("@prisma/client").$Enums.ExamMode;
@@ -212,9 +271,11 @@ export declare class ExamService {
         allowScoreView: boolean;
         allowAnswerReview: boolean;
         maxScore: number;
+        requireLogin: boolean;
         status: import("@prisma/client").$Enums.ExamStatus;
         shuffleQuestions: boolean;
         shuffleOptions: boolean;
+        publicId: string;
         teacherId: string;
     })[]>;
     addQuestions(examId: string, teacherId: string, questions: any[]): Promise<[import("@prisma/client").Prisma.BatchPayload, import("@prisma/client").Prisma.BatchPayload]>;

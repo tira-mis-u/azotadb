@@ -32,14 +32,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    const saved = (localStorage.getItem('azota-theme') as Theme) || 'dark';
+    const saved = (localStorage.getItem('quizzorz-theme') as Theme) || 'dark';
     setThemeState(saved);
     applyTheme(saved);
   }, []);
 
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('azota-theme', newTheme);
+    localStorage.setItem('quizzorz-theme', newTheme);
     applyTheme(newTheme);
   };
 

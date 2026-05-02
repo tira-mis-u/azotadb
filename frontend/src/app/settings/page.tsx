@@ -4,12 +4,13 @@ import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  User, Shield, Bell, Key, LogOut, 
+  User, Shield, Bell, LogOut, 
   Save, Camera, CheckCircle2, Loader2, Mail,
-  Smartphone, Globe, ExternalLink
+  Smartphone, Globe, Zap, ChevronRight
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/utils';
 
 export default function SettingsPage() {
   const { user, activeRole, logout } = useAuth();
@@ -34,27 +35,34 @@ export default function SettingsPage() {
   };
 
   const handleLogout = async () => {
-    if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+    if (window.confirm('HỆ THỐNG XÁC NHẬN: BẠN CÓ CHẮC CHẮN MUỐN ĐĂNG XUẤT?')) {
       await logout();
       router.push('/login');
     }
   };
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: 1100, margin: '0 auto' }}>
+    <div className="p-10 max-w-7xl mx-auto space-y-12 animate-in fade-in duration-700">
       <PageHeader 
         title="Cài đặt hệ thống" 
-        description="Quản lý thông tin cá nhân, bảo mật và các tuỳ chỉnh tài khoản của bạn."
+        description="Quản lý và tinh chỉnh các thiết lập cá nhân, bảo mật cho tài khoản AzotaDB của bạn."
         backHref="/dashboard"
         breadcrumbs={[
-          { label: 'Cài đặt' }
+          { label: 'Cá nhân hóa', href: '#' },
+          { label: 'Cài đặt hệ thống' }
         ]}
+        actions={
+          <div className="flex items-center gap-3 px-6 py-3 bg-card border border-border rounded-2xl shadow-xl shadow-primary/5">
+             <Zap className="text-primary w-5 h-5 animate-pulse" />
+             <span className="text-[10px] font-black text-foreground uppercase tracking-[0.2em]">CẬP NHẬT LẦN CUỐI: VỪA XONG</span>
+          </div>
+        }
       />
 
-      <div className="flex flex-col lg:flex-row gap-10 items-start">
+      <div className="flex flex-col lg:flex-row gap-12 items-start">
         {/* Navigation Sidebar */}
-        <div style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }} className="w-full lg:w-72 shrink-0 rounded-[2rem] border p-4 shadow-sm">
-          <div className="space-y-2">
+        <div className="w-full lg:w-80 shrink-0 space-y-6">
+          <div className="bg-card border border-border rounded-[2.5rem] p-6 shadow-2xl shadow-primary/5 space-y-2">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
@@ -62,94 +70,102 @@ export default function SettingsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    backgroundColor: isActive ? 'var(--accent)' : 'transparent',
-                    color: isActive ? 'var(--primary)' : 'var(--muted-foreground)'
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all group hover:bg-gray-50 dark:hover:bg-gray-800/50`}
+                  className={cn(
+                    "w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all group",
+                    isActive 
+                      ? "bg-primary text-primary-foreground shadow-xl shadow-primary/20" 
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-indigo-500' : 'text-gray-400 group-hover:text-gray-600'}`} />
+                  <Icon className={cn("w-5 h-5 transition-transform group-hover:scale-110", isActive ? "text-primary-foreground" : "text-muted-foreground")} />
                   {tab.label}
-                  {isActive && <motion.div layoutId="active-tab" className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500" />}
+                  {isActive && <ChevronRight className="ml-auto w-4 h-4 opacity-50" />}
                 </button>
               );
             })}
+            
+            <div className="pt-6 mt-4 border-t border-border">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-4 px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest text-destructive hover:bg-destructive/10 transition-all group"
+              >
+                <LogOut className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+                ĐĂNG XUẤT
+              </button>
+            </div>
           </div>
-          
-          <div style={{ borderTop: '1px solid var(--border)' }} className="mt-4 pt-4">
-            <button 
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all group"
-            >
-              <LogOut className="w-5 h-5 text-red-500 group-hover:scale-110 transition-transform" />
-              Đăng xuất tài khoản
-            </button>
+
+          <div className="bg-primary/5 border border-primary/10 rounded-[2.5rem] p-8 space-y-4">
+             <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.3em]">Hệ sinh thái Azota</h4>
+             <p className="text-[10px] font-bold text-muted-foreground leading-loose uppercase tracking-widest opacity-70">AzotaDB là nền tảng quản lý ngân hàng câu hỏi và luyện thi thông minh hàng đầu Việt Nam.</p>
           </div>
         </div>
 
         {/* Content Area */}
-        <div style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }} className="flex-1 w-full rounded-[2.5rem] border shadow-sm overflow-hidden min-h-[600px]">
+        <div className="flex-1 w-full bg-card border border-border rounded-[3rem] shadow-2xl shadow-primary/5 overflow-hidden min-h-[600px] flex flex-col relative">
+          <div className="absolute top-0 left-0 w-full h-2 bg-linear-to-r from-primary to-indigo-500 opacity-20" />
+          
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-              className="p-8 md:p-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="p-10 md:p-16 flex-1 flex flex-col"
             >
               {activeTab === 'profile' && (
-                <div className="space-y-10">
-                  <div className="flex flex-col md:flex-row gap-10 items-center md:items-start pb-10 border-b border-gray-100 dark:border-gray-800">
+                <div className="space-y-12">
+                  <div className="flex flex-col md:flex-row gap-12 items-center md:items-start pb-12 border-b border-border">
                     <div className="relative group">
-                      <div style={{ borderColor: 'var(--border)', backgroundColor: 'var(--background)' }} className="w-32 h-32 rounded-[2.5rem] border-4 flex items-center justify-center overflow-hidden shadow-2xl transition-transform group-hover:scale-105">
-                         <span style={{ color: 'var(--primary)' }} className="text-4xl font-black">
+                      <div className="w-40 h-40 rounded-[3rem] border-8 border-background bg-card flex items-center justify-center overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-transform group-hover:scale-105 duration-500">
+                         <span className="text-5xl font-black text-primary">
                            {user?.email?.charAt(0).toUpperCase() || 'U'}
                          </span>
                       </div>
-                      <button className="absolute -bottom-2 -right-2 p-3 bg-indigo-600 text-white rounded-2xl shadow-xl hover:bg-indigo-700 transition-all">
-                        <Camera size={18} />
+                      <button className="absolute -bottom-2 -right-2 p-4 bg-primary text-primary-foreground rounded-2xl shadow-2xl hover:scale-110 transition-all border-4 border-card">
+                        <Camera size={20} />
                       </button>
                     </div>
                     
-                    <div className="text-center md:text-left space-y-2">
-                       <h2 style={{ color: 'var(--foreground)' }} className="text-2xl font-black">Thông tin tài khoản</h2>
-                       <p style={{ color: 'var(--muted-foreground)' }} className="text-sm font-medium">ID: <span className="font-mono text-[10px] bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">{user?.id?.substring(0, 8)}...</span></p>
-                       <div className="flex flex-wrap justify-center md:justify-start gap-2 pt-2">
-                         <span style={{ backgroundColor: 'var(--accent)', color: 'var(--primary)' }} className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900/30">
-                            {activeRole === 'TEACHER' ? 'Giảng viên' : 'Học sinh'}
+                    <div className="text-center md:text-left space-y-4">
+                       <h2 className="text-4xl font-black tracking-tighter text-foreground uppercase leading-none">Thông tin tài khoản</h2>
+                       <p className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 justify-center md:justify-start">
+                          IDENTIFIER: <span className="font-mono text-primary bg-primary/10 px-3 py-1 rounded-xl">{user?.id?.substring(0, 12)}...</span>
+                       </p>
+                       <div className="flex flex-wrap justify-center md:justify-start gap-3 pt-2">
+                         <span className="px-5 py-2 bg-primary/10 text-primary rounded-xl text-[10px] font-black uppercase tracking-widest border border-primary/20">
+                            {activeRole === 'TEACHER' ? 'GIẢNG VIÊN HỆ THỐNG' : 'HỌC SINH CHUYÊN CẦN'}
                          </span>
-                         <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800/30">
-                            Đã xác thực
+                         <span className="px-5 py-2 bg-success/10 text-success rounded-xl text-[10px] font-black uppercase tracking-widest border border-success/20">
+                            XÁC THỰC DANH TÍNH
                          </span>
                        </div>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                      <label style={{ color: 'var(--foreground)' }} className="text-xs font-black uppercase tracking-widest opacity-60 ml-1">Tên hiển thị</label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Tên hiển thị công khai</label>
+                      <div className="relative group">
+                        <User className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-all" />
                         <input 
                           type="text" 
                           defaultValue={user?.email?.split('@')[0]}
-                          style={{ backgroundColor: 'var(--input)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                          className="w-full pl-12 pr-5 py-4 rounded-2xl border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-bold shadow-inner"
+                          className="w-full pl-16 pr-8 py-5 rounded-[1.5rem] border border-border bg-background text-base font-black text-foreground focus:ring-8 focus:ring-primary/5 transition-all shadow-inner"
                         />
                       </div>
                     </div>
                     
-                    <div className="space-y-3">
-                      <label style={{ color: 'var(--foreground)' }} className="text-xs font-black uppercase tracking-widest opacity-60 ml-1">Địa chỉ Email</label>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Địa chỉ Email liên hệ</label>
                       <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground opacity-40" />
                         <input 
                           type="email" 
                           value={user?.email || ''}
                           disabled
-                          style={{ backgroundColor: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
-                          className="w-full pl-12 pr-5 py-4 rounded-2xl border text-sm cursor-not-allowed font-bold"
+                          className="w-full pl-16 pr-8 py-5 rounded-[1.5rem] border border-border bg-muted text-base font-black text-muted-foreground cursor-not-allowed opacity-60"
                         />
                       </div>
                     </div>
@@ -158,81 +174,78 @@ export default function SettingsPage() {
               )}
 
               {activeTab === 'security' && (
-                <div className="space-y-10">
-                  <div>
-                    <h2 style={{ color: 'var(--foreground)' }} className="text-2xl font-black mb-2">Mật khẩu & Bảo mật</h2>
-                    <p style={{ color: 'var(--muted-foreground)' }} className="text-sm font-medium">Bảo vệ tài khoản của bạn bằng mật khẩu mạnh và các lớp bảo mật bổ sung.</p>
+                <div className="space-y-12">
+                  <div className="space-y-2">
+                    <h2 className="text-4xl font-black tracking-tighter text-foreground uppercase">Mật khẩu & Bảo mật</h2>
+                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest opacity-60">XÂY DỰNG LỚP PHÒNG THỦ VỮNG CHẮC CHO DỮ LIỆU CỦA BẠN.</p>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-6 max-w-lg">
-                    <div className="space-y-3">
-                      <label style={{ color: 'var(--foreground)' }} className="text-xs font-black uppercase tracking-widest opacity-60 ml-1">Mật khẩu hiện tại</label>
+                  <div className="grid grid-cols-1 gap-8 max-w-2xl">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Mật khẩu hiện tại</label>
                       <input 
                         type="password" 
-                        placeholder="••••••••"
-                        style={{ backgroundColor: 'var(--input)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                        className="w-full px-5 py-4 rounded-2xl border text-base focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-black tracking-widest"
+                        placeholder="••••••••••••"
+                        className="w-full px-8 py-5 rounded-[1.5rem] border border-border bg-background text-lg font-black tracking-[0.5em] focus:ring-8 focus:ring-primary/5 transition-all shadow-inner"
                       />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-3">
-                        <label style={{ color: 'var(--foreground)' }} className="text-xs font-black uppercase tracking-widest opacity-60 ml-1">Mật khẩu mới</label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Mật khẩu mới</label>
                         <input 
                           type="password" 
-                          placeholder="••••••••"
-                          style={{ backgroundColor: 'var(--input)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                          className="w-full px-5 py-4 rounded-2xl border text-base focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-black tracking-widest"
+                          placeholder="••••••••••••"
+                          className="w-full px-8 py-5 rounded-[1.5rem] border border-border bg-background text-lg font-black tracking-[0.5em] focus:ring-8 focus:ring-primary/5 transition-all shadow-inner"
                         />
                       </div>
-                      <div className="space-y-3">
-                        <label style={{ color: 'var(--foreground)' }} className="text-xs font-black uppercase tracking-widest opacity-60 ml-1">Xác nhận lại</label>
+                      <div className="space-y-4">
+                        <label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Xác nhận mật khẩu</label>
                         <input 
                           type="password" 
-                          placeholder="••••••••"
-                          style={{ backgroundColor: 'var(--input)', borderColor: 'var(--border)', color: 'var(--foreground)' }}
-                          className="w-full px-5 py-4 rounded-2xl border text-base focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all font-black tracking-widest"
+                          placeholder="••••••••••••"
+                          className="w-full px-8 py-5 rounded-[1.5rem] border border-border bg-background text-lg font-black tracking-[0.5em] focus:ring-8 focus:ring-primary/5 transition-all shadow-inner"
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div style={{ backgroundColor: 'var(--muted)', borderColor: 'var(--border)' }} className="p-6 rounded-3xl border flex items-center justify-between group cursor-pointer hover:border-indigo-400 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center text-indigo-500 shadow-sm">
-                         <Smartphone size={24} />
+                  <div className="p-8 rounded-[2.5rem] border border-border bg-muted/30 flex flex-col md:flex-row items-center justify-between gap-6 group cursor-pointer hover:border-primary/40 transition-all shadow-sm">
+                    <div className="flex items-center gap-6">
+                      <div className="w-16 h-16 rounded-2xl bg-background flex items-center justify-center text-primary shadow-xl border border-border group-hover:scale-110 transition-transform">
+                         <Smartphone size={32} />
                       </div>
                       <div>
-                         <p style={{ color: 'var(--foreground)' }} className="font-black text-sm">Bảo mật 2 lớp (2FA)</p>
-                         <p style={{ color: 'var(--muted-foreground)' }} className="text-xs font-medium">Chưa kích hoạt</p>
+                         <p className="font-black text-sm uppercase tracking-tight text-foreground">Xác thực 2 yếu tố (2FA)</p>
+                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mt-1 opacity-60">CHƯA KÍCH HOẠT • ĐỀ XUẤT BẬT NGAY</p>
                       </div>
                     </div>
-                    <button className="text-xs font-black uppercase tracking-widest text-indigo-600 hover:underline">Thiết lập ngay</button>
+                    <button className="px-8 py-3 bg-card border border-border rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary hover:text-primary-foreground transition-all">Thiết lập ngay</button>
                   </div>
                 </div>
               )}
 
               {activeTab === 'notifications' && (
-                <div className="space-y-10">
-                  <div>
-                    <h2 style={{ color: 'var(--foreground)' }} className="text-2xl font-black mb-2">Trung tâm thông báo</h2>
-                    <p style={{ color: 'var(--muted-foreground)' }} className="text-sm font-medium">Tuỳ chỉnh cách bạn nhận thông báo từ các kỳ thi và kết quả.</p>
+                <div className="space-y-12">
+                  <div className="space-y-2">
+                    <h2 className="text-4xl font-black tracking-tighter text-foreground uppercase">Trung tâm thông báo</h2>
+                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest opacity-60">QUẢN LÝ CÁCH THỨC HỆ THỐNG GIAO TIẾP VỚI BẠN.</p>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="grid gap-6">
                     {[
-                      { label: 'Thông báo Email', desc: 'Nhận kết quả thi và thông báo qua địa chỉ email.' },
-                      { label: 'Thông báo Trình duyệt', desc: 'Nhận thông báo đẩy ngay cả khi không mở tab.' },
-                      { label: 'Cập nhật khóa học', desc: 'Thông báo khi giáo viên đăng bài thi mới.' },
-                      { label: 'Nhắc nhở làm bài', desc: 'Thông báo khi bài thi sắp hết hạn tham gia.' }
+                      { label: 'THÔNG BÁO QUA EMAIL', desc: 'NHẬN KẾT QUẢ VÀ BÁO CÁO ĐỊNH KỲ QUA HÒM THƯ.' },
+                      { label: 'THÔNG BÁO ĐẨY (PUSH)', desc: 'NHẬN TIN NHẮN TỨC THÌ TRÊN TRÌNH DUYỆT.' },
+                      { label: 'CẬP NHẬT ĐỀ THI', desc: 'THÔNG BÁO KHI CÓ ĐỀ THI MỚI ĐƯỢC CÔNG BỐ.' },
+                      { label: 'NHẮC NHỞ HỌC TẬP', desc: 'CÁC THÔNG BÁO NHẮC NHỞ LUYỆN TẬP HÀNG NGÀY.' }
                     ].map((item, idx) => (
-                      <div key={idx} style={{ backgroundColor: 'var(--muted)', borderColor: 'var(--border)' }} className="p-6 rounded-3xl border flex items-center justify-between">
-                         <div>
-                            <p style={{ color: 'var(--foreground)' }} className="font-black text-sm">{item.label}</p>
-                            <p style={{ color: 'var(--muted-foreground)' }} className="text-xs font-medium">{item.desc}</p>
+                      <div key={idx} className="p-8 rounded-[2rem] border border-border bg-muted/20 flex items-center justify-between group hover:border-primary/20 transition-all">
+                         <div className="space-y-1">
+                            <p className="font-black text-sm text-foreground tracking-tight">{item.label}</p>
+                            <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.25em] opacity-60">{item.desc}</p>
                          </div>
                          <label className="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" defaultChecked={idx === 0} className="sr-only peer" />
-                            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                            <div className="w-14 h-7 bg-muted rounded-full border border-border peer-checked:bg-primary transition-all after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-7" />
                           </label>
                       </div>
                     ))}
@@ -240,23 +253,23 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Common Bottom Action Bar */}
-              <div style={{ borderTop: '1px solid var(--border)' }} className="mt-12 pt-8 flex items-center justify-between">
-                 <div className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-gray-400" />
-                    <span style={{ color: 'var(--muted-foreground)' }} className="text-[10px] font-bold uppercase tracking-widest">Ngôn ngữ: Tiếng Việt</span>
+              {/* Bottom Action Bar */}
+              <div className="mt-auto pt-12 border-t border-border flex flex-col md:flex-row items-center justify-between gap-8">
+                 <div className="flex items-center gap-3 opacity-60">
+                    <Globe className="w-5 h-5 text-primary" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">LANGUAGE: VIETNAMESE (INTL)</span>
                  </div>
                  
-                 <div className="flex items-center gap-4">
+                 <div className="flex items-center gap-6">
                     <AnimatePresence>
                       {saved && (
                         <motion.div
                           initial={{ opacity: 0, x: 20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 20 }}
-                          className="flex items-center gap-2 text-xs font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2 rounded-xl"
+                          className="flex items-center gap-3 text-[10px] font-black text-success bg-success/10 px-6 py-3 rounded-2xl border border-success/20 uppercase tracking-widest"
                         >
-                          <CheckCircle2 size={16} /> Đã lưu thành công!
+                          <CheckCircle2 size={16} /> Dữ liệu đã được cập nhật!
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -264,15 +277,10 @@ export default function SettingsPage() {
                     <button 
                       onClick={handleSave}
                       disabled={isSaving}
-                      style={{ 
-                        backgroundColor: 'var(--primary)', 
-                        color: 'var(--primary-foreground)',
-                        boxShadow: '0 10px 20px -5px rgba(99, 102, 241, 0.3)'
-                      }}
-                      className="flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-70"
+                      className="flex items-center gap-4 px-12 py-5 bg-primary text-primary-foreground rounded-[1.75rem] font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
                     >
-                      {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                      {isSaving ? 'Đang cập nhật...' : 'Lưu cài đặt'}
+                      {isSaving ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />}
+                      {isSaving ? 'ĐANG ĐỒNG BỘ...' : 'LƯU THAY ĐỔI'}
                     </button>
                  </div>
               </div>

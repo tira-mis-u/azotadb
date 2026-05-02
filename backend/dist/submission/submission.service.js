@@ -17,40 +17,69 @@ let SubmissionService = class SubmissionService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async startSubmission(examId, userId) {
+    getDurationMs(value, unit) {
+        const unitMap = {
+            MINUTE: 60 * 1000,
+            HOUR: 60 * 60 * 1000,
+            DAY: 24 * 60 * 60 * 1000,
+            WEEK: 7 * 24 * 60 * 60 * 1000,
+            MONTH: 30 * 24 * 60 * 60 * 1000,
+        };
+        return value * (unitMap[unit] || unitMap.MINUTE);
+    }
+    async startSubmission(publicId, userId, guestName, guestSessionId) {
         const exam = await this.prisma.exam.findUnique({
-            where: { id: examId }
+            where: { publicId },
         });
         if (!exam)
             throw new common_1.NotFoundException('Exam not found');
+        if (exam.requireLogin && !userId) {
+            throw new common_1.ForbiddenException('Vui lòng đăng nhập để làm bài thi này');
+        }
+        if (!userId && (!guestName || !guestSessionId)) {
+            throw new common_1.BadRequestException('Guest require name and session ID');
+        }
         const inProgress = await this.prisma.submission.findFirst({
-            where: {
-                examId,
-                userId,
-                status: 'IN_PROGRESS'
-            }
+            where: userId
+                ? {
+                    examId: exam.id,
+                    userId,
+                    status: 'IN_PROGRESS',
+                }
+                : {
+                    examId: exam.id,
+                    guestSessionId,
+                    status: 'IN_PROGRESS',
+                },
         });
         if (inProgress)
             return inProgress;
         const previousAttempts = await this.prisma.submission.count({
-            where: {
-                examId,
-                userId
-            }
+            where: userId
+                ? {
+                    examId: exam.id,
+                    userId,
+                }
+                : {
+                    examId: exam.id,
+                    guestSessionId,
+                },
         });
         if (exam.maxAttempts > 0 && previousAttempts >= exam.maxAttempts) {
             throw new common_1.ForbiddenException(`Bạn đã hết số lần làm bài (Tối đa: ${exam.maxAttempts} lần)`);
         }
         return this.prisma.submission.create({
             data: {
-                examId,
+                examId: exam.id,
                 userId,
+                guestName,
+                guestSessionId,
                 status: 'IN_PROGRESS',
-                attemptNumber: previousAttempts + 1
+                attemptNumber: previousAttempts + 1,
             },
         });
     }
-    async getSubmission(id, userId) {
+    async getSubmission(id, userId, guestSessionId) {
         const submission = await this.prisma.submission.findUnique({
             where: { id },
             include: {
@@ -62,8 +91,16 @@ let SubmissionService = class SubmissionService {
                 answers: true,
             },
         });
-        if (!submission || submission.userId !== userId) {
+        if (!submission) {
             throw new common_1.NotFoundException('Submission not found');
+        }
+        if (userId) {
+            if (submission.userId !== userId)
+                throw new common_1.ForbiddenException('Permission denied');
+        }
+        else {
+            if (submission.guestSessionId !== guestSessionId)
+                throw new common_1.ForbiddenException('Guest Session Invalid');
         }
         if (submission.status === 'IN_PROGRESS') {
             submission.exam.questions = submission.exam.questions.map((q) => {
@@ -75,7 +112,7 @@ let SubmissionService = class SubmissionService {
         }
         else if (submission.status === 'SUBMITTED') {
             const examAny = submission.exam;
-            if (!(examAny.allowAnswerReview)) {
+            if (!examAny.allowAnswerReview) {
                 submission.exam.questions = submission.exam.questions.map((q) => {
                     const metadata = q.metadata;
                     const { correct_answers, correct_answer, explanation, ...rest } = metadata;
@@ -83,33 +120,43 @@ let SubmissionService = class SubmissionService {
                     return q;
                 });
             }
-            if (!(examAny.allowScoreView)) {
+            if (!examAny.allowScoreView) {
                 submission.score = null;
             }
         }
         return submission;
     }
-    async autosave(submissionId, userId, questionId, answer) {
+    async autosave(submissionId, questionId, answer, userId, guestSessionId) {
         const submission = await this.prisma.submission.findUnique({
             where: { id: submissionId },
         });
-        if (!submission || submission.userId !== userId) {
-            throw new common_1.ForbiddenException('Permission denied');
+        if (!submission)
+            throw new common_1.NotFoundException('Submission not found');
+        if (userId) {
+            if (submission.userId !== userId)
+                throw new common_1.ForbiddenException('Permission denied');
+        }
+        else {
+            if (submission.guestSessionId !== guestSessionId)
+                throw new common_1.ForbiddenException('Guest Session Invalid');
+        }
+        if (!questionId) {
+            throw new common_1.BadRequestException('Question ID is required');
         }
         if (submission.status === 'SUBMITTED') {
             throw new common_1.BadRequestException('Exam already submitted');
         }
-        const existingAnswer = await this.prisma.submissionAnswer.findFirst({
-            where: { submissionId, questionId },
-        });
-        if (existingAnswer) {
-            return this.prisma.submissionAnswer.update({
-                where: { id: existingAnswer.id },
-                data: { studentAnswer: answer },
-            });
-        }
-        return this.prisma.submissionAnswer.create({
-            data: {
+        return this.prisma.submissionAnswer.upsert({
+            where: {
+                submissionId_questionId: {
+                    submissionId,
+                    questionId,
+                },
+            },
+            update: {
+                studentAnswer: answer,
+            },
+            create: {
                 submissionId,
                 questionId,
                 studentAnswer: answer,
@@ -126,17 +173,25 @@ let SubmissionService = class SubmissionService {
                     answers: true,
                 },
             });
-            if (!submission || submission.userId !== userId) {
+            if (!submission)
                 throw new common_1.NotFoundException('Submission not found');
+            if (userId) {
+                if (submission.userId !== userId)
+                    throw new common_1.ForbiddenException('Permission denied');
+            }
+            else {
+                if (submission.guestSessionId !== extraData?.guestSessionId)
+                    throw new common_1.ForbiddenException('Guest Session Invalid');
             }
             if (submission.status === 'SUBMITTED') {
                 throw new common_1.BadRequestException('Already submitted');
             }
             const exam = submission.exam;
-            if (exam.isTimed && exam.duration) {
+            if (exam.isTimed && exam.durationValue) {
                 const startTime = new Date(submission.startTime).getTime();
-                const durationMs = (exam.duration + 2) * 60 * 1000;
-                if (Date.now() > startTime + durationMs) {
+                const durationMs = this.getDurationMs(exam.durationValue, exam.durationUnit || 'MINUTE');
+                const gracePeriodMs = 2 * 60 * 1000;
+                if (Date.now() > startTime + durationMs + gracePeriodMs) {
                 }
             }
             let totalPoints = 0;
@@ -153,10 +208,13 @@ let SubmissionService = class SubmissionService {
                     const correctAnswers = metadata.correct_answers;
                     if (Array.isArray(correctAnswers)) {
                         if (Array.isArray(studentAns)) {
-                            isCorrect = JSON.stringify([...studentAns].sort()) === JSON.stringify([...correctAnswers].sort());
+                            isCorrect =
+                                JSON.stringify([...studentAns].sort()) ===
+                                    JSON.stringify([...correctAnswers].sort());
                         }
                         else {
-                            isCorrect = correctAnswers.length === 1 && correctAnswers[0] === studentAns;
+                            isCorrect =
+                                correctAnswers.length === 1 && correctAnswers[0] === studentAns;
                         }
                     }
                     else {
@@ -213,9 +271,10 @@ let SubmissionService = class SubmissionService {
                     select: {
                         id: true,
                         title: true,
-                        duration: true,
-                    }
-                }
+                        durationValue: true,
+                        durationUnit: true,
+                    },
+                },
             },
             orderBy: { startTime: 'desc' },
         });

@@ -4,6 +4,7 @@ import React from 'react';
 import { ParsedQuestion } from '@/lib/utils/question-parser';
 import { Plus, Trash2, GripVertical, CheckCircle2, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface VisualQuestionBuilderProps {
   data: ParsedQuestion;
@@ -64,57 +65,62 @@ export function VisualQuestionBuilder({ data, onChange }: VisualQuestionBuilderP
   };
 
   return (
-    <div className="p-6 space-y-8 h-full overflow-y-auto bg-white dark:bg-gray-950">
+    <div className="p-8 space-y-10 bg-background h-full overflow-y-auto custom-scrollbar animate-in fade-in duration-500">
       {/* Question Type Selection */}
-      <div className="flex flex-wrap gap-2">
-        {(['MULTIPLE_CHOICE', 'TRUE_FALSE', 'TRUE_FALSE_GROUP', 'ESSAY'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => handleTypeChange(t)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border-2 ${
-              data.type === t 
-                ? 'border-indigo-600 bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20' 
-                : 'border-gray-100 dark:border-gray-800 text-gray-500 hover:border-gray-200'
-            }`}
-          >
-            {t.replace(/_/g, ' ')}
-          </button>
-        ))}
+      <div className="space-y-4">
+        <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Loại câu hỏi</label>
+        <div className="flex flex-wrap gap-2">
+          {(['MULTIPLE_CHOICE', 'TRUE_FALSE_GROUP', 'ESSAY'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => handleTypeChange(t)}
+              className={cn(
+                "px-5 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2",
+                data.type === t 
+                  ? "bg-primary/10 border-primary text-primary shadow-lg shadow-primary/10 scale-105" 
+                  : "bg-card border-border text-muted-foreground hover:border-primary/30"
+              )}
+            >
+              {t.replace(/_/g, ' ')}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="space-y-4">
-        <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Nội dung câu hỏi</label>
+      <div className="space-y-3">
+        <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Nội dung câu hỏi</label>
         <textarea
           value={data.content}
           onChange={(e) => handleContentChange(e.target.value)}
-          rows={4}
-          className="w-full px-4 py-3 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/50 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all resize-none"
-          placeholder="Nhập nội dung câu hỏi (hỗ trợ Markdown)..."
+          rows={5}
+          className="w-full px-6 py-5 rounded-[2rem] border border-border bg-card text-foreground text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all resize-none shadow-sm placeholder:text-muted-foreground/50"
+          placeholder="Nhập nội dung câu hỏi (Hỗ trợ Markdown)..."
         />
       </div>
 
       {/* Type-specific inputs */}
       {data.type === 'MULTIPLE_CHOICE' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Các phương án trả lời</label>
-            <Button onClick={addChoice} variant="ghost" size="sm" className="h-8 text-[10px] uppercase font-bold text-indigo-600">
-              <Plus className="w-3 h-3 mr-1" /> Thêm phương án
+        <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center justify-between px-1">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Các phương án trả lời</label>
+            <Button onClick={addChoice} variant="ghost" size="sm" className="h-9 px-4 rounded-xl text-[10px] uppercase font-black text-primary hover:bg-primary/10">
+              <Plus className="w-4 h-4 mr-2" /> Thêm phương án
             </Button>
           </div>
-          <div className="space-y-3">
-            {data.choices?.map((choice) => (
-              <div key={choice.id} className="flex gap-3 items-start group">
+          <div className="grid gap-4">
+            {data.choices?.map((choice, i) => (
+              <div key={`${choice.id}-${i}`} className="flex gap-4 items-start group relative">
                 <button 
                   onClick={() => toggleCorrectChoice(choice.id)}
-                  className={`mt-2 shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                  className={cn(
+                    "mt-2 shrink-0 w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all font-black text-xs shadow-sm",
                     data.correct_answers?.includes(choice.id)
-                      ? 'bg-emerald-500 border-emerald-500 text-white'
-                      : 'border-gray-200 dark:border-gray-700 text-gray-400 hover:border-indigo-500'
-                  }`}
+                      ? "bg-success border-success text-white scale-110 shadow-lg shadow-success/20"
+                      : "bg-muted border-border text-muted-foreground hover:border-primary/50 group-hover:text-primary"
+                  )}
                 >
-                  <span className="text-[10px] font-bold">{choice.id}</span>
+                  {choice.id}
                 </button>
                 <div className="flex-1">
                   <input
@@ -124,14 +130,14 @@ export function VisualQuestionBuilder({ data, onChange }: VisualQuestionBuilderP
                       onChange({ ...data, choices: newChoices });
                     }}
                     placeholder={`Nội dung phương án ${choice.id}...`}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-100 dark:border-gray-800 bg-gray-50/30 dark:bg-gray-800/30 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    className="w-full px-6 py-3.5 rounded-[1.25rem] border border-border bg-card text-foreground text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all shadow-sm"
                   />
                 </div>
                 <button 
                   onClick={() => removeChoice(choice.id)}
-                  className="mt-2 p-1.5 text-gray-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                  className="mt-2.5 p-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-5 h-5" />
                 </button>
               </div>
             ))}
@@ -139,55 +145,34 @@ export function VisualQuestionBuilder({ data, onChange }: VisualQuestionBuilderP
         </div>
       )}
 
-      {data.type === 'TRUE_FALSE' && (
-        <div className="space-y-4">
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Đáp án đúng</label>
-          <div className="flex gap-4">
-            <button
-              onClick={() => onChange({ ...data, correct_answer: true })}
-              className={`flex-1 py-4 rounded-2xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${
-                data.correct_answer === true ? 'border-emerald-500 bg-emerald-50 text-emerald-600' : 'border-gray-100 text-gray-400'
-              }`}
-            >
-              {data.correct_answer === true ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-              ĐÚNG
-            </button>
-            <button
-              onClick={() => onChange({ ...data, correct_answer: false })}
-              className={`flex-1 py-4 rounded-2xl border-2 font-bold transition-all flex items-center justify-center gap-2 ${
-                data.correct_answer === false ? 'border-red-500 bg-red-50 text-red-600' : 'border-gray-100 text-gray-400'
-              }`}
-            >
-              {data.correct_answer === false ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-              SAI
-            </button>
-          </div>
-        </div>
-      )}
+
 
       {data.type === 'TRUE_FALSE_GROUP' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Danh sách mệnh đề</label>
-            <Button onClick={addStatement} variant="ghost" size="sm" className="h-8 text-[10px] uppercase font-bold text-indigo-600">
-              <Plus className="w-3 h-3 mr-1" /> Thêm mệnh đề
+        <div className="space-y-6 animate-in slide-in-from-top-4 duration-300">
+          <div className="flex items-center justify-between px-1">
+            <label className="block text-[10px] font-black uppercase tracking-widest text-muted-foreground">Danh sách mệnh đề</label>
+            <Button onClick={addStatement} variant="ghost" size="sm" className="h-9 px-4 rounded-xl text-[10px] uppercase font-black text-primary hover:bg-primary/10">
+              <Plus className="w-4 h-4 mr-2" /> Thêm mệnh đề
             </Button>
           </div>
-          <div className="space-y-4">
+          <div className="grid gap-6">
             {data.statements?.map((stmt, idx) => (
-              <div key={stmt.id} className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 space-y-3 group relative">
+              <div key={`${stmt.id}-${idx}`} className="p-8 rounded-[2rem] bg-card border border-border space-y-6 group relative shadow-xl hover:border-primary/40 transition-all">
                 <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-2">
-                     <GripVertical className="w-4 h-4 text-gray-300" />
-                     <span className="text-xs font-bold text-indigo-600">{String.fromCharCode(97 + idx)})</span>
+                   <div className="flex items-center gap-3">
+                     <GripVertical className="w-5 h-5 text-muted-foreground/30" />
+                     <span className="text-sm font-black text-primary uppercase tracking-widest">{String.fromCharCode(97 + idx)}) Mệnh đề {idx + 1}</span>
                    </div>
-                   <div className="flex items-center bg-white dark:bg-gray-800 p-1 rounded-xl border border-gray-100 dark:border-gray-700">
+                   <div className="flex items-center bg-muted p-1 rounded-2xl border border-border">
                      <button
                        onClick={() => {
                          const newStmts = data.statements?.map(s => s.id === stmt.id ? { ...s, correctAnswer: true } : s);
                          onChange({ ...data, statements: newStmts });
                        }}
-                       className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${stmt.correctAnswer ? 'bg-emerald-500 text-white shadow-sm' : 'text-gray-400'}`}
+                       className={cn(
+                         "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                         stmt.correctAnswer ? "bg-success text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
+                       )}
                      >
                        Đúng
                      </button>
@@ -196,7 +181,10 @@ export function VisualQuestionBuilder({ data, onChange }: VisualQuestionBuilderP
                          const newStmts = data.statements?.map(s => s.id === stmt.id ? { ...s, correctAnswer: false } : s);
                          onChange({ ...data, statements: newStmts });
                        }}
-                       className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${!stmt.correctAnswer ? 'bg-red-500 text-white shadow-sm' : 'text-gray-400'}`}
+                       className={cn(
+                         "px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                         !stmt.correctAnswer ? "bg-destructive text-white shadow-lg" : "text-muted-foreground hover:text-foreground"
+                       )}
                      >
                        Sai
                      </button>
@@ -208,15 +196,15 @@ export function VisualQuestionBuilder({ data, onChange }: VisualQuestionBuilderP
                     const newStmts = data.statements?.map(s => s.id === stmt.id ? { ...s, content: e.target.value } : s);
                     onChange({ ...data, statements: newStmts });
                   }}
-                  rows={2}
-                  className="w-full px-4 py-2 rounded-xl bg-white dark:bg-gray-800 border-none text-sm focus:ring-2 focus:ring-indigo-500 transition-all resize-none shadow-sm"
-                  placeholder="Nội dung mệnh đề..."
+                  rows={3}
+                  className="w-full px-6 py-4 rounded-2xl bg-background border border-border text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all resize-none shadow-inner"
+                  placeholder="Nội dung mệnh đề chi tiết..."
                 />
                 <button 
                   onClick={() => removeStatement(stmt.id)}
-                  className="absolute -right-2 -top-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+                  className="absolute -right-3 -top-3 w-10 h-10 rounded-full bg-destructive text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-xl hover:scale-110 z-10"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-5 h-5" />
                 </button>
               </div>
             ))}

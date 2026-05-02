@@ -34,6 +34,9 @@ let ExamController = class ExamController {
     getTeacherQuestions(userId) {
         return this.examService.getTeacherQuestions(userId);
     }
+    async findByPublicId(publicId) {
+        return this.examService.findByPublicId(publicId, 'GUEST');
+    }
     findOne(id, userId, role) {
         return this.examService.findOne(id, userId, role);
     }
@@ -88,6 +91,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ExamController.prototype, "getTeacherQuestions", null);
+__decorate([
+    (0, common_1.Get)('public/:publicId'),
+    __param(0, (0, common_1.Param)('publicId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], ExamController.prototype, "findByPublicId", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),

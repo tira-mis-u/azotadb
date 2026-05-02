@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AzotaDB - Hệ thống luyện đề thi online",
+  title: "QuizzOrz - Hệ thống thi trực tuyến thông minh",
   description: "Luyện đề thi trực tuyến thông minh, chấm bài tự động, phân tích điểm yếu. Dành cho giáo viên và học sinh.",
   keywords: "luyện đề, thi online, ôn thi, đề thi, học tập",
 };
@@ -30,7 +30,7 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var t = localStorage.getItem('azota-theme') || 'dark';
+                  var t = localStorage.getItem('quizzorz-theme') || 'dark';
                   document.documentElement.setAttribute('data-theme', t);
                   document.documentElement.classList.add(t === 'light' ? '' : t);
                 } catch(e) {}

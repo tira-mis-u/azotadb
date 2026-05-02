@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Patch, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Patch,
+  Delete,
+} from '@nestjs/common';
 import { ExamService } from './exam.service';
 import { CreateExamDto } from './dto/create-exam.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -29,6 +38,13 @@ export class ExamController {
   @Roles('TEACHER', 'ADMIN')
   getTeacherQuestions(@GetUser('userId') userId: string) {
     return this.examService.getTeacherQuestions(userId);
+  }
+
+  @Get('public/:publicId')
+  async findByPublicId(@Param('publicId') publicId: string) {
+    // Trả về dữ liệu bài thi cho flow làm bài (Student/Guest)
+    // Auth kiểm tra ở frontend và enforce logic lúc submit. Tuy nhiên, vẫn phải ẩn đáp án.
+    return this.examService.findByPublicId(publicId, 'GUEST');
   }
 
   @Get(':id')

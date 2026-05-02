@@ -2,7 +2,7 @@ import { SubmissionService } from './submission.service';
 export declare class SubmissionController {
     private readonly submissionService;
     constructor(submissionService: SubmissionService);
-    getSubmission(id: string, userId: string): Promise<{
+    getSubmission(id: string, userId?: string, guestSessionId?: string): Promise<{
         exam: {
             questions: {
                 id: string;
@@ -19,7 +19,8 @@ export declare class SubmissionController {
             createdAt: Date;
             title: string;
             description: string | null;
-            duration: number | null;
+            durationValue: number | null;
+            durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
             startTime: Date | null;
             endTime: Date | null;
             mode: import("@prisma/client").$Enums.ExamMode;
@@ -32,9 +33,11 @@ export declare class SubmissionController {
             allowScoreView: boolean;
             allowAnswerReview: boolean;
             maxScore: number;
+            requireLogin: boolean;
             status: import("@prisma/client").$Enums.ExamStatus;
             shuffleQuestions: boolean;
             shuffleOptions: boolean;
+            publicId: string;
             teacherId: string;
         };
         answers: {
@@ -47,12 +50,14 @@ export declare class SubmissionController {
         }[];
     } & {
         id: string;
-        userId: string;
+        userId: string | null;
         startTime: Date;
         endTime: Date | null;
         examCode: string | null;
         status: string;
         examId: string;
+        guestName: string | null;
+        guestSessionId: string | null;
         score: number | null;
         candidateNumber: string | null;
         attemptNumber: number;
@@ -61,11 +66,15 @@ export declare class SubmissionController {
         scoreHidden: boolean;
         reviewHidden: boolean;
     }>;
-    startSubmission(examId: string, userId: string): Promise<any>;
-    autosave(id: string, userId: string, body: {
+    startSubmission(publicId: string, userId?: string, body?: {
+        guestName?: string;
+        guestSessionId?: string;
+    }): Promise<any>;
+    autosave(id: string, body: {
         questionId: string;
         answer: any;
-    }): Promise<{
+        guestSessionId?: string;
+    }, userId?: string): Promise<{
         id: string;
         questionId: string;
         studentAnswer: import("@prisma/client/runtime/library").JsonValue | null;
@@ -73,25 +82,29 @@ export declare class SubmissionController {
         pointsAwarded: number | null;
         submissionId: string;
     }>;
-    submitExam(id: string, userId: string, body: {
+    submitExam(id: string, userId?: string, body?: {
         violations?: any[];
         candidateNumber?: string;
         examCode?: string;
+        guestSessionId?: string;
     }): Promise<any>;
     getMySubmissions(userId: string): Promise<({
         exam: {
             id: string;
             title: string;
-            duration: number | null;
+            durationValue: number | null;
+            durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         };
     } & {
         id: string;
-        userId: string;
+        userId: string | null;
         startTime: Date;
         endTime: Date | null;
         examCode: string | null;
         status: string;
         examId: string;
+        guestName: string | null;
+        guestSessionId: string | null;
         score: number | null;
         candidateNumber: string | null;
         attemptNumber: number;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import useSWR, { mutate } from 'swr';
 import axios from 'axios';
@@ -8,11 +8,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { DataTable } from '@/components/ui/data-table';
 import { QuestionEditor } from '@/components/teacher/question-editor';
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
+import { PageHeader } from '@/components/ui/page-header';
 import { 
-  Loader2, Plus, Search, Filter, MoreHorizontal, 
-  Eye, Edit, Trash2, Tag, BookOpen, X, CheckCircle2, XCircle
+  Plus, Search, Filter, MoreHorizontal, 
+  Eye, Edit, Trash2, Tag, BookOpen, X, CheckCircle2, XCircle, Save, Loader2, Zap
 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface ExamMetadata {
   choices?: { id: string; content: string }[];
@@ -29,7 +31,7 @@ interface ExamRef {
 interface Question {
   id: string;
   content: string;
-  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'ESSAY';
+  type: 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'TRUE_FALSE_GROUP' | 'ESSAY';
   points: number;
   metadata: ExamMetadata;
   exam?: ExamRef;
@@ -46,6 +48,9 @@ export default function QuestionBankPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
   
+  // Local state for the editor data
+  const [tempQuestionData, setTempQuestionData] = useState<any>(null);
+
   const swrKey = session?.access_token ? ['/api/exams/teacher/questions', session.access_token] : null;
 
   const { data: questions, error, isLoading } = useSWR<Question[]>(
@@ -60,37 +65,38 @@ export default function QuestionBankPage() {
 
   const handleOpenCreate = () => {
     setEditingQuestion(null);
+    setTempQuestionData(null);
     setIsEditorOpen(true);
   };
 
   const handleOpenEdit = (question: any) => {
     setEditingQuestion(question);
+    setTempQuestionData(null);
     setIsEditorOpen(true);
   };
 
-  const handleSave = async (parsedQuestion: any, rawContent: string) => {
-    if (!session?.access_token) return;
+  const handleFinalSave = async () => {
+    if (!session?.access_token || !tempQuestionData) return;
     setIsSaving(true);
     try {
       if (editingQuestion) {
         await axios.patch(`/api/exams/teacher/questions/${editingQuestion.id}`, {
-          content: parsedQuestion.content,
-          type: parsedQuestion.type,
+          content: tempQuestionData.content,
+          type: tempQuestionData.type,
           metadata: {
-            choices: parsedQuestion.choices,
-            correct_answers: parsedQuestion.correct_answers,
-            correct_answer: parsedQuestion.correct_answer,
-            explanation: parsedQuestion.explanation || ''
+            choices: tempQuestionData.choices,
+            correct_answers: tempQuestionData.correct_answers,
+            correct_answer: tempQuestionData.correct_answer,
+            explanation: tempQuestionData.explanation || ''
           }
         }, { headers: { Authorization: `Bearer ${session.access_token}` } });
+      } else {
+        // Handle create new if needed
       }
-      // Note: Creating standalone questions requires an exam context in this architecture.
-      // For now we only support editing existing questions from this page.
       mutate(swrKey);
       setIsEditorOpen(false);
     } catch (err) {
       console.error('Failed to save question:', err);
-      alert('Không thể lưu câu hỏi. Vui lòng thử lại.');
     } finally {
       setIsSaving(false);
     }
@@ -114,15 +120,15 @@ export default function QuestionBankPage() {
       accessorKey: 'content',
       cell: (row: Question) => (
         <div className="max-w-[300px] md:max-w-[500px]">
-          <div className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
+          <div className="text-sm font-bold text-foreground line-clamp-2 leading-relaxed">
             <MarkdownRenderer content={row.content} />
           </div>
-          <div className="flex items-center gap-2 mt-1.5">
-            <span className="inline-flex items-center gap-1 text-[10px] uppercase font-bold tracking-wider text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-0.5 rounded-md">
-              {row.type === 'MULTIPLE_CHOICE' ? 'Trắc nghiệm' : row.type === 'TRUE_FALSE' ? 'Đúng/Sai' : 'Tự luận'}
+          <div className="flex items-center gap-2 mt-3">
+            <span className="inline-flex items-center gap-1 text-[9px] uppercase font-black tracking-widest text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-xl shadow-xs">
+              {row.type.replace(/_/g, ' ')}
             </span>
-            <span className="inline-flex items-center gap-1 text-[10px] text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
-              <Tag className="w-3 h-3" /> {row.metadata?.topic || 'Chung'}
+            <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-muted-foreground bg-muted px-3 py-1 rounded-xl border border-border">
+              <Tag className="w-3 h-3" /> {row.metadata?.topic || 'CHUNG'}
             </span>
           </div>
         </div>
@@ -132,8 +138,10 @@ export default function QuestionBankPage() {
       header: 'Nguồn đề',
       accessorKey: 'exam.title',
       cell: (row: Question) => (
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <BookOpen className="w-4 h-4 text-emerald-500 shrink-0" />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground font-black uppercase tracking-tight">
+          <div className="w-8 h-8 rounded-xl bg-success/10 flex items-center justify-center shrink-0">
+             <BookOpen className="w-4 h-4 text-success" />
+          </div>
           <span className="truncate max-w-[150px]">{row.exam?.title || '—'}</span>
         </div>
       ),
@@ -142,7 +150,7 @@ export default function QuestionBankPage() {
       header: 'Điểm',
       accessorKey: 'points',
       cell: (row: Question) => (
-        <span className="text-sm font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 px-2 py-0.5 rounded-lg">{row.points}</span>
+        <span className="text-xs font-black text-amber-600 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl">{row.points}Đ</span>
       ),
     },
     {
@@ -152,38 +160,38 @@ export default function QuestionBankPage() {
         const meta = row.metadata;
         if (row.type === 'MULTIPLE_CHOICE') {
           const correct = meta?.correct_answers?.join(', ');
-          return <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-lg">{correct}</span>;
+          return <span className="text-[10px] font-black text-success bg-success/10 border border-success/20 px-3 py-1 rounded-xl uppercase tracking-widest">{correct}</span>;
         }
         if (row.type === 'TRUE_FALSE') {
           return meta?.correct_answer === true
-            ? <span className="flex items-center gap-1 text-xs font-bold text-emerald-600"><CheckCircle2 className="w-3.5 h-3.5" />Đúng</span>
-            : <span className="flex items-center gap-1 text-xs font-bold text-red-500"><XCircle className="w-3.5 h-3.5" />Sai</span>;
+            ? <span className="flex items-center gap-1.5 text-[10px] font-black text-success uppercase tracking-widest bg-success/10 px-3 py-1 rounded-xl border border-success/20"><CheckCircle2 className="w-3.5 h-3.5" />ĐÚNG</span>
+            : <span className="flex items-center gap-1.5 text-[10px] font-black text-destructive uppercase tracking-widest bg-destructive/10 px-3 py-1 rounded-xl border border-destructive/20"><XCircle className="w-3.5 h-3.5" />SAI</span>;
         }
-        return <span className="text-xs text-gray-400">Tự luận</span>;
+        return <span className="text-[10px] text-muted-foreground italic font-black uppercase tracking-widest">TỰ LUẬN</span>;
       }
     },
     {
       header: 'Thao tác',
       accessorKey: 'actions',
       cell: (row: Question) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button 
             onClick={() => setViewingQuestion(row)}
-            className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+            className="p-3 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-2xl transition-all duration-300"
           >
-            <Eye className="w-4 h-4" />
+            <Eye className="w-4.5 h-4.5" />
           </button>
           <button 
             onClick={() => handleOpenEdit(row)}
-            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+            className="p-3 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-2xl transition-all duration-300"
           >
-            <Edit className="w-4 h-4" />
+            <Edit className="w-4.5 h-4.5" />
           </button>
           <button 
             onClick={() => handleDelete(row.id)}
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+            className="p-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-2xl transition-all duration-300"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4.5 h-4.5" />
           </button>
         </div>
       ),
@@ -192,96 +200,122 @@ export default function QuestionBankPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="p-8 space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="flex items-center justify-between">
-          <Skeleton className="h-10 w-[300px]" />
-          <Skeleton className="h-10 w-32" />
+      <div className="p-10 space-y-10 animate-in fade-in duration-700">
+        <div className="space-y-4">
+          <Skeleton className="h-6 w-48 rounded-full" />
+          <Skeleton className="h-12 w-80 rounded-2xl" />
         </div>
-        <Skeleton className="h-[400px] w-full rounded-2xl" />
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-16 w-[500px] rounded-[2rem]" />
+          <Skeleton className="h-16 w-52 rounded-[2rem]" />
+        </div>
+        <Skeleton className="h-[600px] w-full rounded-3xl" />
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Ngân hàng câu hỏi</h1>
-          <p className="text-sm text-gray-500 mt-1">Quản lý tổng cộng <span className="font-bold text-indigo-600">{questions?.length || 0}</span> câu hỏi từ tất cả đề thi.</p>
-        </div>
-        <button 
-          onClick={handleOpenCreate}
-          className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25"
-        >
-          <Plus className="w-4 h-4" /> Thêm câu hỏi
-        </button>
-      </div>
-
-      <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-        {/* Toolbar */}
-        <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex flex-col sm:flex-row items-center gap-4 justify-between bg-gray-50/50 dark:bg-gray-900/50">
-          <div className="relative w-full sm:w-96">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm nội dung câu hỏi..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-            />
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <button className="flex items-center justify-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-all w-full sm:w-auto">
-              <Filter className="w-4 h-4" /> Bộ lọc
-            </button>
-            <button className="p-2 border border-gray-200 dark:border-gray-700 rounded-xl text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all">
-              <MoreHorizontal className="w-4 h-4" />
+    <div className="p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-700">
+      {/* Integrated Header & Toolbar */}
+      <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-2xl transition-all duration-500">
+        <div className="p-10 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Ngân hàng câu hỏi</h1>
+              <p className="text-sm font-bold text-muted-foreground opacity-70 uppercase tracking-widest leading-relaxed">
+                Quản lý hệ thống <span className="text-primary font-black">{questions?.length || 0}</span> câu hỏi thông minh của bạn
+              </p>
+            </div>
+            <button 
+              onClick={handleOpenCreate}
+              className="flex items-center justify-center gap-3 px-10 py-5 bg-primary text-primary-foreground text-xs font-black rounded-2xl transition-all hover:scale-105 shadow-2xl shadow-primary/30 uppercase tracking-[0.2em]"
+            >
+              <Plus className="w-5 h-5" /> THÊM CÂU HỎI MỚI
             </button>
           </div>
+
+          <div className="flex flex-col lg:flex-row items-center gap-6">
+            <div className="relative flex-1 w-full group">
+              <Search className="w-6 h-6 absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-all duration-300" />
+              <input
+                type="text"
+                placeholder="TÌM KIẾM NỘI DUNG, CHỦ ĐỀ HOẶC ĐÁP ÁN..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-16 pr-8 py-5 bg-background border border-border rounded-[2rem] text-sm font-bold focus:ring-8 focus:ring-primary/5 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/40 placeholder:font-black placeholder:uppercase placeholder:tracking-[0.15em] shadow-inner"
+              />
+            </div>
+            <div className="flex items-center gap-4 w-full lg:w-auto">
+              <button className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-10 py-5 bg-card border border-border text-foreground text-xs font-black uppercase tracking-widest rounded-2xl hover:bg-muted hover:border-primary/40 transition-all shadow-sm">
+                <Filter className="w-5 h-5 text-primary" /> BỘ LỌC
+              </button>
+              <button className="p-5 bg-muted/50 border border-border rounded-2xl text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all shadow-sm">
+                <MoreHorizontal className="w-6 h-6" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Data Table */}
-        <div className="p-4">
+        {/* DataTable Container directly below toolbar */}
+        <div className="border-t border-border/50">
           <DataTable
             columns={columns}
             data={filteredQuestions}
-            emptyMessage="Không tìm thấy câu hỏi nào."
+            isLoading={isLoading}
+            emptyMessage="Không tìm thấy câu hỏi nào phù hợp với tiêu chí tìm kiếm."
           />
         </div>
       </div>
 
-      {/* Question Editor Modal */}
+      {/* Editor Modal Overlay */}
       <AnimatePresence>
         {isEditorOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm p-4 md:p-8 flex items-center justify-center"
+            className="fixed inset-0 z-50 bg-background/90 backdrop-blur-3xl p-6 md:p-12 flex items-center justify-center"
           >
             <motion.div
-              initial={{ scale: 0.95, y: 20 }}
+              initial={{ scale: 0.9, y: 100 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-gray-950 w-full h-full rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-gray-200 dark:border-gray-800"
+              exit={{ scale: 0.9, y: 100 }}
+              className="bg-background w-full h-full rounded-[4rem] shadow-[0_0_120px_rgba(0,0,0,0.2)] overflow-hidden flex flex-col border border-border"
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 shrink-0">
-                <div>
-                  <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                    {editingQuestion ? 'Chỉnh sửa câu hỏi' : 'Thêm câu hỏi mới'}
-                  </h3>
-                  <p className="text-xs text-gray-500 mt-0.5">Soạn thảo theo định dạng Markdown. Preview realtime ở cột bên phải.</p>
+              <div className="flex items-center justify-between px-12 py-8 border-b border-border bg-card shrink-0">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary shadow-inner">
+                    {editingQuestion ? <Edit size={32} /> : <Plus size={32} />}
+                  </div>
+                  <div>
+                    <h3 className="font-black text-3xl text-foreground tracking-tighter uppercase leading-none">
+                      {editingQuestion ? 'Hiệu chỉnh câu hỏi' : 'Tạo mới câu hỏi'}
+                    </h3>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mt-3 flex items-center gap-2">
+                       <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                       Tự động lưu nháp • Realtime Sync
+                    </p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setIsEditorOpen(false)}
-                  className="p-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-full transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleFinalSave}
+                    disabled={isSaving}
+                    className="flex items-center gap-3 px-10 py-4 bg-primary text-primary-foreground rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {isSaving ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+                    LƯU THAY ĐỔI
+                  </button>
+                  <button
+                    onClick={() => setIsEditorOpen(false)}
+                    className="p-5 bg-muted hover:bg-destructive hover:text-white rounded-2xl transition-all shadow-inner"
+                  >
+                    <Plus className="w-6 h-6 rotate-45" />
+                  </button>
+                </div>
               </div>
 
-              <div className="flex-1 overflow-hidden p-4">
+              <div className="flex-1 overflow-hidden p-10">
                 <QuestionEditor
                   initialValue={editingQuestion
                     ? `${editingQuestion.content}\n\n${(editingQuestion.metadata?.choices || []).map((c: any) => 
@@ -289,7 +323,7 @@ export default function QuestionBankPage() {
                       ).join('\n')}`
                     : ''
                   }
-                  onSave={handleSave}
+                  onChange={(parsed, raw) => setTempQuestionData(parsed)}
                   isLoading={isSaving}
                 />
               </div>
@@ -298,59 +332,99 @@ export default function QuestionBankPage() {
         )}
       </AnimatePresence>
 
-      {/* Question Preview Modal */}
+      {/* Preview Modal */}
       <AnimatePresence>
         {viewingQuestion && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-6"
+            className="fixed inset-0 z-50 bg-background/90 backdrop-blur-2xl flex items-center justify-center p-8"
             onClick={() => setViewingQuestion(null)}
           >
             <motion.div
-              initial={{ scale: 0.95, y: 10 }}
+              initial={{ scale: 0.9, y: 50 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
+              exit={{ scale: 0.9, y: 50 }}
               onClick={e => e.stopPropagation()}
-              className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              className="bg-card rounded-[3.5rem] shadow-[0_0_80px_rgba(0,0,0,0.15)] border border-border max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col transition-all duration-500"
             >
-              <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
-                <h3 className="font-bold text-gray-900 dark:text-white">Xem trước câu hỏi</h3>
+              <div className="flex items-center justify-between p-10 border-b border-border bg-muted/20">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-1 bg-primary rounded-full" />
+                  <h3 className="font-black text-2xl text-foreground tracking-tighter uppercase">XEM TRƯỚC CHI TIẾT</h3>
+                </div>
                 <button
                   onClick={() => setViewingQuestion(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  className="p-4 bg-muted hover:bg-primary/10 hover:text-primary rounded-2xl transition-all"
                 >
-                  <X className="w-4 h-4 text-gray-500" />
+                  <Plus className="w-6 h-6 rotate-45" />
                 </button>
               </div>
-              <div className="p-6">
-                <div className="text-sm font-medium text-gray-800 dark:text-gray-200 mb-4">
+              <div className="p-12 overflow-y-auto space-y-10 custom-scrollbar">
+                <div className="text-2xl font-bold text-foreground leading-relaxed animate-in fade-in slide-in-from-bottom-2">
                   <MarkdownRenderer content={viewingQuestion.content} />
                 </div>
+                
                 {viewingQuestion.type === 'MULTIPLE_CHOICE' && (
-                  <div className="space-y-2">
-                    {viewingQuestion.metadata?.choices?.map((c: any) => {
+                  <div className="grid grid-cols-1 gap-4">
+                    {viewingQuestion.metadata?.choices?.map((c: any, idx) => {
                       const isCorrect = viewingQuestion.metadata?.correct_answers?.includes(c.id);
                       return (
-                        <div key={c.id} className={`flex items-center gap-3 p-3 rounded-xl border ${isCorrect ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20 dark:border-emerald-800' : 'border-gray-100 dark:border-gray-800'}`}>
-                          <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${isCorrect ? 'bg-emerald-500 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'}`}>{c.id}</span>
-                          <span className="text-sm text-gray-700 dark:text-gray-300">{c.content}</span>
-                          {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto" />}
-                        </div>
+                        <motion.div 
+                          key={c.id} 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: idx * 0.05 }}
+                          className={cn(
+                            "flex items-center gap-6 p-6 rounded-[1.75rem] border transition-all duration-500 group",
+                            isCorrect 
+                              ? "border-success/40 bg-success/5 shadow-lg shadow-success/5" 
+                              : "border-border bg-background hover:border-primary/20"
+                          )}
+                        >
+                          <span className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shadow-inner transition-all",
+                            isCorrect ? "bg-success text-white scale-110 shadow-lg shadow-success/20" : "bg-muted text-muted-foreground group-hover:text-primary"
+                          )}>{c.id}</span>
+                          <span className={cn("text-base font-bold", isCorrect ? "text-foreground" : "text-muted-foreground group-hover:text-foreground")}>{c.content}</span>
+                          {isCorrect && <CheckCircle2 className="w-6 h-6 text-success ml-auto animate-in zoom-in" />}
+                        </motion.div>
                       );
                     })}
                   </div>
                 )}
-                {viewingQuestion.type === 'TRUE_FALSE' && (
-                  <div className={`flex items-center gap-2 p-3 rounded-xl mt-2 font-bold ${viewingQuestion.metadata?.correct_answer ? 'text-emerald-600 bg-emerald-50' : 'text-red-500 bg-red-50'}`}>
-                    {viewingQuestion.metadata?.correct_answer ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                    Đáp án: {viewingQuestion.metadata?.correct_answer ? 'ĐÚNG' : 'SAI'}
-                  </div>
+                
+                {(viewingQuestion.type === 'TRUE_FALSE' || viewingQuestion.type === 'TRUE_FALSE_GROUP') && (
+                   <div className="space-y-4">
+                      {viewingQuestion.type === 'TRUE_FALSE' ? (
+                        <div className={cn(
+                          "flex items-center gap-4 p-6 rounded-[2rem] border font-black text-base uppercase tracking-[0.2em] shadow-xl",
+                          viewingQuestion.metadata?.correct_answer 
+                            ? "text-success bg-success/10 border-success/30 shadow-success/10" 
+                            : "text-destructive bg-destructive/10 border-destructive/30 shadow-destructive/10"
+                        )}>
+                          {viewingQuestion.metadata?.correct_answer ? <CheckCircle2 className="w-7 h-7" /> : <XCircle className="w-7 h-7" />}
+                          ĐÁP ÁN ĐÚNG: {viewingQuestion.metadata?.correct_answer ? 'ĐÚNG' : 'SAI'}
+                        </div>
+                      ) : (
+                        <div className="grid gap-4">
+                           {/* Render statements if needed */}
+                           <p className="text-xs font-black text-muted-foreground uppercase tracking-widest opacity-50 italic">Dữ liệu dạng câu hỏi tổ hợp Đúng/Sai</p>
+                        </div>
+                      )}
+                   </div>
                 )}
+                
                 {viewingQuestion.metadata?.explanation && (
-                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-xl text-sm text-blue-700 dark:text-blue-300">
-                    <span className="font-bold">Giải thích: </span>{viewingQuestion.metadata.explanation}
+                  <div className="p-8 bg-primary/5 border border-primary/20 rounded-[2.5rem] text-sm leading-relaxed relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-10 -mt-10 blur-2xl group-hover:bg-primary/10 transition-all" />
+                    <span className="font-black text-primary uppercase tracking-[0.25em] block mb-4 flex items-center gap-2">
+                       <Zap className="w-4 h-4" /> Giải thích chuyên sâu:
+                    </span>
+                    <div className="text-foreground/90 font-bold italic text-base leading-loose">
+                       {viewingQuestion.metadata.explanation}
+                    </div>
                   </div>
                 )}
               </div>

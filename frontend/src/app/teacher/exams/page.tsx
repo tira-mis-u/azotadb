@@ -8,13 +8,15 @@ import axios from 'axios';
 import { DataTable } from '@/components/ui/data-table';
 import {
   Plus, Search, MoreHorizontal, Edit2, Trash2,
-  Copy, Eye, Play, Pause, FileText, AlertCircle
+  Copy, Eye, Play, Pause, FileText, AlertCircle, Calendar, Users, Link as LinkIcon
 } from 'lucide-react';
 import Link from 'next/link';
 import { PageHeader } from '@/components/ui/page-header';
+import { cn } from '@/lib/utils';
 
 interface TeacherExam {
   id: string;
+  publicId: string;
   title: string;
   createdAt: string;
   status: 'DRAFT' | 'PUBLISHED';
@@ -92,16 +94,15 @@ export default function TeacherExamsPage() {
       header: 'Tên đề thi',
       accessorKey: 'title',
       cell: (exam: TeacherExam) => (
-        <div className="flex items-center gap-3">
-          <div 
-            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)' }}
-            className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-          >
-            <FileText size={20} />
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20 shadow-xs">
+            <FileText size={24} />
           </div>
-          <div>
-            <p style={{ color: 'var(--foreground)' }} className="font-semibold line-clamp-1">{exam.title}</p>
-            <p style={{ color: 'var(--muted-foreground)' }} className="text-xs">Tạo ngày {new Date(exam.createdAt).toLocaleDateString('vi-VN')}</p>
+          <div className="space-y-1">
+            <p className="font-bold text-foreground line-clamp-1 text-base tracking-tight">{exam.title}</p>
+            <div className="flex items-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+               <Calendar size={12} /> {new Date(exam.createdAt).toLocaleDateString('vi-VN')}
+            </div>
           </div>
         </div>
       )
@@ -112,34 +113,30 @@ export default function TeacherExamsPage() {
       cell: (exam: TeacherExam) => {
         const isPublished = exam.status === 'PUBLISHED';
         return (
-          <span 
-            style={{ 
-              backgroundColor: isPublished ? 'rgba(16, 185, 129, 0.1)' : 'rgba(245, 158, 11, 0.1)',
-              color: isPublished ? '#10b981' : '#f59e0b',
-              border: `1px solid ${isPublished ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)'}`
-            }}
-            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-          >
+          <span className={cn(
+            "inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border",
+            isPublished 
+              ? "bg-success/10 text-success border-success/30" 
+              : "bg-amber-500/10 text-amber-600 border-amber-500/30"
+          )}>
             {isPublished ? 'Đang công khai' : 'Bản nháp'}
           </span>
         );
       }
     },
     {
-      header: 'Số câu',
-      accessorKey: 'qCount',
+      header: 'Thống kê',
+      accessorKey: 'stats',
       cell: (exam: TeacherExam) => (
-        <div style={{ color: 'var(--muted-foreground)' }} className="text-sm font-medium">
-          {exam._count?.questions || 0} câu
-        </div>
-      )
-    },
-    {
-      header: 'Lượt làm',
-      accessorKey: 'sCount',
-      cell: (exam: TeacherExam) => (
-        <div style={{ color: 'var(--muted-foreground)' }} className="text-sm font-medium">
-          {exam._count?.submissions || 0} lượt
+        <div className="flex flex-col gap-1.5">
+           <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+              <FileText size={14} className="text-primary" />
+              <span>{exam._count?.questions || 0} câu</span>
+           </div>
+           <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground">
+              <Users size={14} className="text-success" />
+              <span>{exam._count?.submissions || 0} lượt thi</span>
+           </div>
         </div>
       )
     },
@@ -147,37 +144,49 @@ export default function TeacherExamsPage() {
       header: 'Thao tác',
       accessorKey: 'actions',
       cell: (exam: TeacherExam) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button
             onClick={() => handleToggleStatus(exam.id)}
             title={exam.status === 'PUBLISHED' ? 'Tạm dừng' : 'Công khai'}
-            style={{ color: 'var(--muted-foreground)' }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+            className="p-2.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
           >
-            {exam.status === 'PUBLISHED' ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {exam.status === 'PUBLISHED' ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
           </button>
           <Link
             href={`/teacher/exams/${exam.id}/edit`}
             title="Chỉnh sửa"
-            style={{ color: 'var(--muted-foreground)' }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+            className="p-2.5 text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all"
           >
-            <Edit2 className="w-4 h-4" />
+            <Edit2 className="w-5 h-5" />
           </Link>
           <button
             onClick={() => handleDuplicate(exam.id)}
             title="Nhân bản"
-            style={{ color: 'var(--muted-foreground)' }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+            className="p-2.5 text-muted-foreground hover:text-emerald-500 hover:bg-emerald-500/10 rounded-xl transition-all"
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-5 h-5" />
+          </button>
+          <button
+            onClick={() => {
+              if (!exam.publicId) {
+                 alert('Bài thi này chưa có Public ID do được tạo từ trước. Vui lòng cập nhật hoặc nhân bản để có link chia sẻ!');
+                 return;
+              }
+              const url = `${window.location.origin}/student/exams/${exam.publicId}/take`;
+              navigator.clipboard.writeText(url);
+              alert('Đã copy link bài thi: ' + url);
+            }}
+            title="Copy link chia sẻ"
+            className="p-2.5 text-muted-foreground hover:text-indigo-500 hover:bg-indigo-500/10 rounded-xl transition-all"
+          >
+            <LinkIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => handleDelete(exam.id)}
             title="Xoá"
-            className="p-2 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+            className="p-2.5 text-destructive hover:bg-destructive/10 rounded-xl transition-all"
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-5 h-5" />
           </button>
         </div>
       )
@@ -185,61 +194,51 @@ export default function TeacherExamsPage() {
   ];
 
   return (
-    <div style={{ padding: '32px 40px', maxWidth: 1200, margin: '0 auto' }}>
-      <PageHeader 
-        title="Quản lý đề thi" 
-        description="Danh sách tất cả các đề thi bạn đã tạo trên hệ thống."
-        actions={
-          <Link
-            href="/teacher/create"
-            style={{ 
-              backgroundColor: 'var(--primary)', 
-              color: 'var(--primary-foreground)',
-              boxShadow: theme === 'neon' ? '0 0 15px var(--primary)' : '0 4px 6px -1px rgba(99, 102, 241, 0.4)'
-            }}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all"
-          >
-            <Plus className="w-4 h-4" /> Tạo đề thi mới
-          </Link>
-        }
-      />
+    <div className="p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500">
+      {/* Integrated Header & Toolbar */}
+      <div className="bg-card border border-border rounded-3xl overflow-hidden shadow-2xl">
+        <div className="p-10 pb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-10">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-black text-foreground tracking-tighter uppercase leading-none">Quản lý đề thi</h1>
+              <p className="text-sm font-bold text-muted-foreground opacity-70 uppercase tracking-widest">Tổ chức và theo dõi hiệu quả các bộ đề của bạn</p>
+            </div>
+            <Link
+              href="/teacher/create"
+              className="inline-flex items-center justify-center gap-3 px-10 py-5 bg-primary text-primary-foreground rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all hover:scale-105 shadow-2xl shadow-primary/30"
+            >
+              <Plus className="w-5 h-5" /> TẠO ĐỀ THI MỚI
+            </Link>
+          </div>
 
-      {/* Filters/Search */}
-      <div 
-        style={{ backgroundColor: 'var(--card)', borderColor: 'var(--border)' }}
-        className="p-4 rounded-2xl border shadow-sm mb-6 flex flex-col md:flex-row gap-4"
-      >
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm theo tên đề thi..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ 
-              backgroundColor: 'var(--input)', 
-              borderColor: 'var(--border)', 
-              color: 'var(--foreground)' 
-            }}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="relative flex-1 w-full group">
+              <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground group-focus-within:text-primary transition-all duration-300" />
+              <input
+                type="text"
+                placeholder="TÌM KIẾM THEO TIÊU ĐỀ BÀI THI..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-16 pr-8 py-5 bg-background border border-border rounded-[2rem] text-sm font-black focus:ring-8 focus:ring-primary/5 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/40 placeholder:font-black placeholder:uppercase placeholder:tracking-[0.15em] shadow-inner"
+              />
+            </div>
+            <div className="flex items-center gap-4 px-8 py-5 bg-muted/50 rounded-[1.5rem] border border-border text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground shadow-sm">
+              <AlertCircle className="w-5 h-5 text-primary animate-pulse" />
+              TỔNG SỐ ĐỀ THI: <span className="text-primary text-base ml-2 font-black">{exams.length}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* DataTable starts directly below toolbar with no gap */}
+        <div className="border-t border-border/50">
+          <DataTable
+            columns={columns}
+            data={filteredExams}
+            isLoading={loading}
+            emptyMessage="Danh sách đang trống. Hãy tạo đề thi đầu tiên của bạn!"
           />
         </div>
-        <div 
-          style={{ backgroundColor: 'var(--muted)', borderColor: 'var(--border)', color: 'var(--muted-foreground)' }}
-          className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl border"
-        >
-          <AlertCircle className="w-3.5 h-3.5" />
-          Tổng số: <span style={{ color: 'var(--primary)' }} className="font-bold">{exams.length}</span> đề thi
-        </div>
       </div>
-
-      {/* Content */}
-      <DataTable
-        columns={columns}
-        data={filteredExams}
-        isLoading={loading}
-        emptyMessage="Bạn chưa có đề thi nào. Hãy bấm 'Tạo đề thi mới' để bắt đầu."
-      />
     </div>
   );
 }

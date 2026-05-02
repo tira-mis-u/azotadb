@@ -2,8 +2,9 @@ import { PrismaService } from '../prisma/prisma.service';
 export declare class SubmissionService {
     private prisma;
     constructor(prisma: PrismaService);
-    startSubmission(examId: string, userId: string): Promise<any>;
-    getSubmission(id: string, userId: string): Promise<{
+    private getDurationMs;
+    startSubmission(publicId: string, userId?: string, guestName?: string, guestSessionId?: string): Promise<any>;
+    getSubmission(id: string, userId?: string, guestSessionId?: string): Promise<{
         exam: {
             questions: {
                 id: string;
@@ -20,7 +21,8 @@ export declare class SubmissionService {
             createdAt: Date;
             title: string;
             description: string | null;
-            duration: number | null;
+            durationValue: number | null;
+            durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
             startTime: Date | null;
             endTime: Date | null;
             mode: import("@prisma/client").$Enums.ExamMode;
@@ -33,9 +35,11 @@ export declare class SubmissionService {
             allowScoreView: boolean;
             allowAnswerReview: boolean;
             maxScore: number;
+            requireLogin: boolean;
             status: import("@prisma/client").$Enums.ExamStatus;
             shuffleQuestions: boolean;
             shuffleOptions: boolean;
+            publicId: string;
             teacherId: string;
         };
         answers: {
@@ -48,12 +52,14 @@ export declare class SubmissionService {
         }[];
     } & {
         id: string;
-        userId: string;
+        userId: string | null;
         startTime: Date;
         endTime: Date | null;
         examCode: string | null;
         status: string;
         examId: string;
+        guestName: string | null;
+        guestSessionId: string | null;
         score: number | null;
         candidateNumber: string | null;
         attemptNumber: number;
@@ -62,7 +68,7 @@ export declare class SubmissionService {
         scoreHidden: boolean;
         reviewHidden: boolean;
     }>;
-    autosave(submissionId: string, userId: string, questionId: string, answer: any): Promise<{
+    autosave(submissionId: string, questionId: string, answer: any, userId?: string, guestSessionId?: string): Promise<{
         id: string;
         questionId: string;
         studentAnswer: import("@prisma/client/runtime/library").JsonValue | null;
@@ -70,25 +76,29 @@ export declare class SubmissionService {
         pointsAwarded: number | null;
         submissionId: string;
     }>;
-    submitExam(submissionId: string, userId: string, extraData?: {
+    submitExam(submissionId: string, userId?: string, extraData?: {
         candidateNumber?: string;
         examCode?: string;
         violations?: any[];
+        guestSessionId?: string;
     }): Promise<any>;
     getMySubmissions(userId: string): Promise<({
         exam: {
             id: string;
             title: string;
-            duration: number | null;
+            durationValue: number | null;
+            durationUnit: import("@prisma/client").$Enums.DurationUnit | null;
         };
     } & {
         id: string;
-        userId: string;
+        userId: string | null;
         startTime: Date;
         endTime: Date | null;
         examCode: string | null;
         status: string;
         examId: string;
+        guestName: string | null;
+        guestSessionId: string | null;
         score: number | null;
         candidateNumber: string | null;
         attemptNumber: number;

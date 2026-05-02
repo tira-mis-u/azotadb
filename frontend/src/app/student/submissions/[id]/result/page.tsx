@@ -7,10 +7,12 @@ import { useAuth } from '@/context/AuthContext';
 import axios from 'axios';
 import {
   Trophy, CheckCircle2, XCircle, Clock,
-  ArrowLeft, RefreshCw, BarChart3, HelpCircle,
-  ChevronDown, ChevronUp, Loader2
+  ArrowLeft, BarChart3, HelpCircle,
+  ChevronDown, ChevronUp, Loader2, Zap, Target, Award, Printer
 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer';
 
 export default function ResultPage() {
   const { id: submissionId } = useParams();
@@ -39,9 +41,14 @@ export default function ResultPage() {
 
   if (loading || !submission) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center">
-        <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Đang tải kết quả bài thi...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+        <div className="relative">
+           <Loader2 className="w-16 h-16 text-primary animate-spin" />
+           <div className="absolute inset-0 flex items-center justify-center">
+              <Zap className="w-6 h-6 text-primary animate-pulse" />
+           </div>
+        </div>
+        <p className="mt-8 text-xs font-black uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Đang giải mã kết quả bài thi...</p>
       </div>
     );
   }
@@ -49,175 +56,202 @@ export default function ResultPage() {
   const correctCount = submission.answers?.filter((a: any) => a.isCorrect).length || 0;
   const totalQuestions = submission.exam.questions.length;
   const accuracy = Math.round((correctCount / totalQuestions) * 100) || 0;
+  const score = submission.score || 0;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-10 max-w-5xl mx-auto space-y-12 animate-in fade-in duration-700">
       {/* Header / Summary Card */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-10 shadow-xl shadow-indigo-500/5 border border-gray-100 dark:border-gray-800 text-center relative overflow-hidden mb-8"
+        initial={{ opacity: 0, scale: 0.9, y: 30 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-card rounded-[3.5rem] p-12 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border border-border text-center relative overflow-hidden"
       >
-        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500" />
+        <div className="absolute top-0 left-0 w-full h-3 bg-linear-to-r from-primary via-purple-500 to-success" />
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl opacity-50" />
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-success/10 rounded-full blur-3xl opacity-50" />
         
-        <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6">
-          <Trophy className="w-10 h-10 text-indigo-600" />
-        </div>
+        <motion.div 
+          initial={{ rotate: -20, scale: 0.5 }}
+          animate={{ rotate: 0, scale: 1 }}
+          transition={{ type: 'spring', damping: 10 }}
+          className="w-24 h-24 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner"
+        >
+          <Trophy className="w-12 h-12 text-primary drop-shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)]" />
+        </motion.div>
 
-        <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Kết quả bài thi</h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-10 font-medium">{submission.exam.title}</p>
+        <h1 className="text-4xl md:text-5xl font-black text-foreground mb-3 tracking-tighter uppercase">CHINH PHỤC THÀNH CÔNG!</h1>
+        <p className="text-muted-foreground mb-12 font-black uppercase tracking-[0.2em] opacity-60">{submission.exam.title}</p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="flex flex-col items-center">
-            <p className="text-4xl font-black text-indigo-600 mb-1">{submission.score?.toFixed(1) || '0.0'}</p>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Tổng điểm</p>
-          </div>
-          <div className="flex flex-col items-center border-x border-gray-100 dark:border-gray-800">
-            <p className="text-4xl font-black text-emerald-500 mb-1">{correctCount}/{totalQuestions}</p>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Số câu đúng</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <p className="text-4xl font-black text-amber-500 mb-1">{accuracy}%</p>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Độ chính xác</p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="space-y-2">
+            <p className="text-6xl font-black text-primary tracking-tighter leading-none">{score.toFixed(1)}</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">TỔNG ĐIỂM HỆ 10</p>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="space-y-2 border-y md:border-y-0 md:border-x border-border/50 py-8 md:py-0">
+            <p className="text-6xl font-black text-success tracking-tighter leading-none">{correctCount}<span className="text-2xl text-muted-foreground opacity-30">/{totalQuestions}</span></p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">CÂU TRẢ LỜI ĐÚNG</p>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="space-y-2">
+            <p className="text-6xl font-black text-amber-500 tracking-tighter leading-none">{accuracy}%</p>
+            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em]">ĐỘ CHÍNH XÁC</p>
+          </motion.div>
         </div>
       </motion.div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-center gap-4 mb-12">
+      <div className="flex flex-wrap items-center justify-center gap-6">
         <Link
           href="/student/exams"
-          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300 font-bold text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-all shadow-sm"
+          className="flex items-center gap-3 px-8 py-4 rounded-2xl bg-card border border-border text-foreground font-black text-xs uppercase tracking-widest hover:bg-muted transition-all shadow-xl shadow-primary/5"
         >
-          <ArrowLeft className="w-4 h-4" /> Quay lại danh sách
+          <ArrowLeft className="w-5 h-5" /> QUAY LẠI KHO ĐỀ
         </Link>
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition-all shadow-lg shadow-indigo-500/25"
+          className="flex items-center gap-3 px-10 py-4 rounded-2xl bg-primary text-primary-foreground font-black text-xs uppercase tracking-widest shadow-2xl shadow-primary/30 hover:scale-105 active:scale-95 transition-all"
         >
-          <BarChart3 className="w-4 h-4" /> In kết quả
+          <Printer className="w-5 h-5" /> XUẤT KẾT QUẢ
         </button>
       </div>
 
       {/* Answer Review Section */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <HelpCircle className="w-5 h-5 text-gray-400" /> Xem lại bài làm
-          </h2>
-          <span className="text-xs text-gray-400 font-medium italic">Bấm vào câu hỏi để xem chi tiết</span>
+      <div className="space-y-8 pt-6">
+        <div className="flex items-center justify-between px-6">
+          <div className="flex items-center gap-4">
+             <Target className="text-primary w-6 h-6" />
+             <h2 className="text-2xl font-black text-foreground tracking-tighter uppercase">PHÂN TÍCH CHI TIẾT BÀI LÀM</h2>
+          </div>
+          <span className="hidden md:block text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] opacity-40">Bấm vào câu hỏi để xem giải thích</span>
         </div>
 
-        {submission.exam.questions.map((q: any, idx: number) => {
-          const answer = submission.answers?.find((a: any) => a.questionId === q.id);
-          const isCorrect = answer?.isCorrect;
-          const isExpanded = expandedQuestion === q.id;
+        <div className="grid gap-6">
+          {submission.exam.questions.map((q: any, idx: number) => {
+            const answer = submission.answers?.find((a: any) => a.questionId === q.id);
+            const isCorrect = answer?.isCorrect;
+            const isExpanded = expandedQuestion === q.id;
 
-          return (
-            <div
-              key={q.id}
-              className={`bg-white dark:bg-gray-900 rounded-3xl border transition-all overflow-hidden ${
-                isCorrect 
-                  ? 'border-emerald-100 dark:border-emerald-900/30' 
-                  : 'border-red-100 dark:border-red-900/30'
-              }`}
-            >
-              <button
-                onClick={() => setExpandedQuestion(isExpanded ? null : q.id)}
-                className="w-full flex items-center justify-between p-6 text-left"
-              >
-                <div className="flex items-center gap-4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                    isCorrect 
-                      ? 'bg-emerald-50 text-emerald-500 dark:bg-emerald-900/20' 
-                      : 'bg-red-50 text-red-500 dark:bg-red-900/20'
-                  }`}>
-                    {isCorrect ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold text-gray-400 uppercase mb-0.5">Câu {idx + 1}</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-1">{q.content}</p>
-                  </div>
-                </div>
-                {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
-              </button>
-
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="border-t border-gray-50 dark:border-gray-800"
-                  >
-                    <div className="p-6 space-y-4">
-                      <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                        {q.content}
-                      </div>
-
-                      {q.type === 'MULTIPLE_CHOICE' && (
-                        <div className="grid grid-cols-1 gap-2">
-                          {(q.metadata as any).choices?.map((choice: any) => {
-                            const isStudentChoice = answer?.studentAnswer?.includes(choice.id);
-                            const isCorrectChoice = (q.metadata as any).correct_answers?.includes(choice.id);
-                            
-                            let bgColor = 'bg-gray-50 dark:bg-gray-800/50';
-                            let borderColor = 'border-gray-100 dark:border-gray-800';
-                            let icon = null;
-
-                            if (isCorrectChoice) {
-                              bgColor = 'bg-emerald-50 dark:bg-emerald-900/20';
-                              borderColor = 'border-emerald-200 dark:border-emerald-800';
-                              icon = <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />;
-                            } else if (isStudentChoice && !isCorrectChoice) {
-                              bgColor = 'bg-red-50 dark:bg-red-900/20';
-                              borderColor = 'border-red-200 dark:border-red-800';
-                              icon = <XCircle className="w-3.5 h-3.5 text-red-500" />;
-                            }
-
-                            return (
-                              <div
-                                key={choice.id}
-                                className={`flex items-center gap-3 p-3 rounded-xl border text-xs transition-all ${bgColor} ${borderColor}`}
-                              >
-                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold shrink-0 ${
-                                  isCorrectChoice ? 'bg-emerald-500 text-white' : 'bg-white dark:bg-gray-800 text-gray-400 border border-gray-100 dark:border-gray-700'
-                                }`}>
-                                  {choice.id}
-                                </div>
-                                <span className="flex-1 font-medium">{choice.content}</span>
-                                {icon}
-                                {isStudentChoice && <span className="text-[10px] font-bold text-gray-400 uppercase ml-2">Bài làm của bạn</span>}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {q.type === 'ESSAY' && (
-                        <div className="space-y-2">
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Bài làm của bạn:</p>
-                          <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50 text-sm text-gray-700 dark:text-gray-300">
-                            {answer?.studentAnswer || '(Không có câu trả lời)'}
-                          </div>
-                        </div>
-                      )}
-
-                      {(q.metadata as any).explanation && (
-                        <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800">
-                          <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1">Giải thích:</p>
-                          <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
-                            {(q.metadata as any).explanation}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
+            return (
+              <motion.div
+                key={q.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: idx * 0.05 }}
+                className={cn(
+                  "bg-card rounded-[2.5rem] border transition-all duration-500 overflow-hidden group",
+                  isCorrect 
+                    ? "border-success/30 hover:border-success/50 shadow-xl shadow-success/5" 
+                    : "border-destructive/30 hover:border-destructive/50 shadow-xl shadow-destructive/5"
                 )}
-              </AnimatePresence>
-            </div>
-          );
-        })}
+              >
+                <button
+                  onClick={() => setExpandedQuestion(isExpanded ? null : q.id)}
+                  className="w-full flex items-center justify-between p-8 text-left"
+                >
+                  <div className="flex items-center gap-8 min-w-0">
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform",
+                      isCorrect ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                    )}>
+                      {isCorrect ? <CheckCircle2 className="w-6 h-6" /> : <XCircle className="w-6 h-6" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                        CÂU HỎI SỐ {idx + 1} • <span className={isCorrect ? "text-success" : "text-destructive"}>{isCorrect ? 'ĐÚNG' : 'SAI'}</span>
+                      </p>
+                      <div className="text-lg font-bold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
+                         <MarkdownRenderer content={q.content} />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center shrink-0">
+                     {isExpanded ? <ChevronUp className="w-5 h-5 opacity-50" /> : <ChevronDown className="w-5 h-5 opacity-50" />}
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="border-t border-border bg-muted/10"
+                    >
+                      <div className="p-10 space-y-8">
+                        <div className="text-xl font-bold text-foreground leading-relaxed animate-in fade-in slide-in-from-top-2">
+                           <MarkdownRenderer content={q.content} />
+                        </div>
+
+                        {q.type === 'MULTIPLE_CHOICE' && (
+                          <div className="grid grid-cols-1 gap-4">
+                            {(q.metadata as any).choices?.map((choice: any) => {
+                              const isStudentChoice = answer?.studentAnswer?.includes(choice.id);
+                              const isCorrectChoice = (q.metadata as any).correct_answers?.includes(choice.id);
+                              
+                              return (
+                                <div
+                                  key={choice.id}
+                                  className={cn(
+                                    "flex items-center gap-6 p-6 rounded-[1.75rem] border text-sm transition-all duration-300",
+                                    isCorrectChoice 
+                                      ? "bg-success/5 border-success/40 shadow-lg shadow-success/5" 
+                                      : isStudentChoice
+                                        ? "bg-destructive/5 border-destructive/40"
+                                        : "bg-background border-border"
+                                  )}
+                                >
+                                  <div className={cn(
+                                    "w-10 h-10 rounded-xl flex items-center justify-center font-black shrink-0 shadow-inner",
+                                    isCorrectChoice ? "bg-success text-white" : "bg-muted text-muted-foreground"
+                                  )}>
+                                    {choice.id}
+                                  </div>
+                                  <span className={cn("flex-1 font-bold", isCorrectChoice ? "text-foreground" : "text-muted-foreground")}>
+                                     {choice.content}
+                                  </span>
+                                  {isCorrectChoice && <CheckCircle2 className="w-5 h-5 text-success animate-in zoom-in" />}
+                                  {isStudentChoice && !isCorrectChoice && <XCircle className="w-5 h-5 text-destructive animate-in zoom-in" />}
+                                  {isStudentChoice && (
+                                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-4 bg-muted px-3 py-1 rounded-lg">BẠN CHỌN</span>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {q.type === 'ESSAY' && (
+                          <div className="space-y-4">
+                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em]">Phần tự luận của bạn:</p>
+                            <div className="p-8 rounded-[2rem] bg-background border border-border text-base text-foreground font-medium leading-relaxed italic shadow-inner">
+                              {answer?.studentAnswer || '(HỆ THỐNG KHÔNG GHI NHẬN CÂU TRẢ LỜI)'}
+                            </div>
+                          </div>
+                        )}
+
+                        {(q.metadata as any).explanation && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-8 rounded-[2.5rem] bg-primary/5 border border-primary/20 relative overflow-hidden"
+                          >
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-2xl" />
+                            <div className="flex items-center gap-3 mb-4">
+                               <Award className="w-5 h-5 text-primary" />
+                               <p className="text-[10px] font-black text-primary uppercase tracking-[0.25em]">Giải thích từ Hội đồng Chuyên môn:</p>
+                            </div>
+                            <p className="text-base text-foreground font-bold italic leading-loose opacity-90">
+                              {(q.metadata as any).explanation}
+                            </p>
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

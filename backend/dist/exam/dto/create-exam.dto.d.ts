@@ -1,10 +1,11 @@
 export declare class CreateExamDto {
     title: string;
     description?: string;
-    duration: number;
+    durationValue?: number;
+    durationUnit?: 'MINUTE' | 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
     startTime?: string;
     endTime?: string;
-    mode?: 'STANDARD' | 'THPTQG';
+    mode?: 'PRACTICE' | 'STANDARD' | 'THPTQG';
     examCode?: string;
     isTimed?: boolean;
     requiresPassword?: boolean;
@@ -15,4 +16,5 @@ export declare class CreateExamDto {
     allowScoreView?: boolean;
     allowAnswerReview?: boolean;
     maxScore?: number;
+    requireLogin?: boolean;
 }
